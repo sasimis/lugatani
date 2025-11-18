@@ -152,3 +152,41 @@ svg.connector line {
   filter: drop-shadow(0 0 6px rgba(126, 227, 183, 0.8)) drop-shadow(0 0 12px rgba(126, 227, 183, 0.4));
   will-change: r, opacity;
 }
+
+#loader {
+  position: fixed;
+  z-index: 9999;
+  inset: 0;
+  background: #111;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: opacity 0.6s cubic-bezier(.4,0,.2,1);
+}
+.loader-content {
+  text-align: center;
+}
+.loader-dot {
+  display: inline-block;
+  width: 14px;
+  height: 14px;
+  margin: 0 4px;
+  border-radius: 50%;
+  background: #7ee3b7;
+  animation: loader-bounce 1.2s infinite alternate;
+}
+.loader-dot:nth-child(2) { animation-delay: 0.2s; }
+.loader-dot:nth-child(3) { animation-delay: 0.4s; }
+@keyframes loader-bounce {
+  to { transform: translateY(-18px); opacity: 0.5; }
+}
+.loader-text {
+  color: #fff;
+  margin-top: 18px;
+  font-size: 1.2rem;
+  letter-spacing: 2px;
+}
+#loader.hide {
+  opacity: 0;
+  pointer-events: none;
+}

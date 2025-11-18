@@ -8,10 +8,91 @@
 <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/ScrollTrigger.min.js"></script>
 
 <link rel="stylesheet" href="testload.css">
+<style>
+#loader {
+  position: fixed;
+  z-index: 9999;
+  inset: 0;
+  background: #111;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: opacity 0.8s ease;
+}
+
+#loader-content {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 40px;
+  text-align: center;
+}
+
+#loader-text {
+  font-size: 3rem;
+  font-weight: 300;
+  color: white;
+  letter-spacing: 3px;
+  min-width: 140px;
+  font-family: 'Helvetica Neue', 'Montserrat', sans-serif;
+}
+
+#loader-arrow {
+  opacity: 0;
+  cursor: pointer;
+  transition: opacity 0.6s ease, transform 0.4s ease;
+  transform: translateY(20px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+#loader-arrow svg {
+  filter: drop-shadow(0 0 4px rgba(255,255,255,0.4));
+  transition: transform 0.3s ease, filter 0.3s ease;
+}
+
+#loader-arrow:hover svg {
+  transform: translateY(-8px);
+  filter: drop-shadow(0 0 8px rgba(126, 227, 183, 0.8));
+}
+
+#loader-arrow:hover svg line {
+  stroke: #7ee3b7;
+  transition: stroke 0.3s ease;
+}
+
+@media (max-width: 600px) {
+  #loader-text {
+    font-size: 2.2rem;
+  }
+  
+  #loader-arrow svg {
+    width: 60px;
+    height: 90px;
+  }
+}
+</style>
 </head>
 <body>
 
+<!-- LOADING SCREEN -->
+<div id="loader">
+  <div id="loader-content">
+    <div id="loader-text">0%</div>
+    <div id="loader-arrow">
+      <svg width="60" height="100" viewBox="0 0 60 100" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <!-- Main arrow line going down -->
+        <line x1="30" y1="10" x2="30" y2="75" stroke="white" stroke-width="1.2" stroke-linecap="round"/>
+        <!-- Left arrow point -->
+        <line x1="30" y1="75" x2="18" y2="62" stroke="white" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round"/>
+        <!-- Right arrow point -->
+        <line x1="30" y1="75" x2="42" y2="62" stroke="white" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round"/>
+      </svg>
+    </div>
+  </div>
 </div>
+
 <div class="panel" id="p1">
   <div class="txt">
     <div class="line"><span class="part from-left">LOREM</span><span class="part">IPSUM</span></div>
@@ -332,6 +413,48 @@ document.querySelectorAll(".panel").forEach(panel => {
   }
 });
 
+const loader = document.getElementById("loader");
+const loaderText = document.getElementById("loader-text");
+const loaderArrow = document.getElementById("loader-arrow");
+
+let current = 0;
+let target = 0;
+
+// Update % counter
+const counter = setInterval(() => {
+  if (current < target) {
+    current++;
+    loaderText.textContent = current + "%";
+  }
+
+  // When it hits 100%, reveal arrow
+  if (current === 100) {
+    loaderArrow.style.opacity = "1";
+    loaderArrow.style.transform = "translateY(0px)";
+  }
+}, 20);
+
+// When page is fully loaded
+window.addEventListener("load", () => {
+  target = 100;
+
+  // User clicks arrow to enter
+  loaderArrow.addEventListener("click", () => {
+    loader.style.transition = "opacity 0.8s ease";
+    loader.style.opacity = "0";
+    setTimeout(() => loader.remove(), 900);
+  });
+});
+
+// Simulate loading until ready
+(function simulateProgress() {
+  const simulate = setInterval(() => {
+    if (target < 90) {
+      target += Math.random() * 5;
+      if (target > 90) target = 90;
+    }
+  }, 100);
+})();
 </script>
 
 
