@@ -57,20 +57,32 @@ function createConnectors(panel) {
   const path = document.createElementNS("http://www.w3.org/2000/svg", "path");
   path.setAttribute("fill", "none");
   path.setAttribute("stroke", "white");
-  path.setAttribute("stroke-width", "3");
+  path.setAttribute("stroke-width", "1");
   path.style.opacity = "0";
   svg.appendChild(path);
 
-  allPaths.push({ panel, svg, path, parts, animated: false });
+  // Create dots for each connection point
+  const dots = parts.map((part, idx) => {
+    const dot = document.createElementNS("http://www.w3.org/2000/svg", "circle");
+    dot.setAttribute("r", "4");
+    dot.setAttribute("fill", "white");
+    dot.style.opacity = "0";
+    dot.style.filter = "drop-shadow(0 0 6px rgba(126, 227, 183, 0.8))";
+    dot.classList.add("connection-dot");
+    svg.appendChild(dot);
+    return dot;
+  });
+
+  allPaths.push({ panel, svg, path, parts, dots, animated: false });
 
   requestAnimationFrame(positionAllPaths);
 
-  return { svg, path };
+  return { svg, path, dots };
 }
 
 function positionAllPaths() {
   allPaths.forEach(entry => {
-    const { svg, path, parts } = entry;
+    const { svg, path, parts, dots } = entry;
     if (!parts || parts.length < 2) return;
 
     const svgRect = svg.getBoundingClientRect();
@@ -89,6 +101,14 @@ function positionAllPaths() {
 
     const d = bezierFromPoints(pts);
     path.setAttribute("d", d);
+
+    // Position dots at each connection point
+    if (dots) {
+      dots.forEach((dot, idx) => {
+        dot.setAttribute("cx", pts[idx].x);
+        dot.setAttribute("cy", pts[idx].y);
+      });
+    }
 
     const len = path.getTotalLength();
     path.style.strokeDasharray = len;
@@ -132,28 +152,77 @@ window.addEventListener("resize", () => {
 
 ScrollTrigger.addEventListener("refresh", positionAllPaths);
 
+// Detect if mobile
+const isMobile = window.innerWidth < 768;
+
+// Animation parameters that adapt to screen size
+const animConfig = {
+  slideDistance: isMobile ? 80 : 150,
+  duration: isMobile ? 0.6 : 1,
+  stagger: isMobile ? 0.04 : 0.07,
+  pathDuration: isMobile ? 0.6 : 1
+};
+
 // Create connectors + animate text + animate path
 document.querySelectorAll(".panel").forEach(panel => {
   const parts = panel.querySelectorAll(".part");
   const conn = createConnectors(panel);
 
   gsap.fromTo(parts,
-    { opacity: 0, x: i => parts[i].classList.contains("from-left") ? -150 : 150 },
+    { opacity: 0, x: i => parts[i].classList.contains("from-left") ? -animConfig.slideDistance : animConfig.slideDistance },
     {
       opacity: 1,
       x: 0,
-      duration: 1,
-      stagger: 0.07,
+      duration: animConfig.duration,
+      stagger: animConfig.stagger,
       ease: "power3.out",
       scrollTrigger: {
         trigger: panel,
-        start: "top center"
+        start: "top center",
+        end: "bottom center",
+        onEnter: () => {
+          gsap.to(parts, {
+            opacity: 1,
+            x: 0,
+            duration: animConfig.duration * 0.8,
+            stagger: animConfig.stagger,
+            ease: "power3.out"
+          });
+        },
+        onLeave: () => {
+          gsap.to(parts, {
+            opacity: 0,
+            x: i => parts[i].classList.contains("from-left") ? -animConfig.slideDistance : animConfig.slideDistance,
+            duration: animConfig.duration * 0.8,
+            stagger: animConfig.stagger * 0.7,
+            ease: "power3.in"
+          });
+        },
+        onEnterBack: () => {
+          gsap.to(parts, {
+            opacity: 1,
+            x: 0,
+            duration: animConfig.duration * 0.8,
+            stagger: animConfig.stagger * 0.7,
+            ease: "power3.out"
+          });
+        },
+        onLeaveBack: () => {
+          gsap.to(parts, {
+            opacity: 0,
+            x: i => parts[i].classList.contains("from-left") ? -animConfig.slideDistance : animConfig.slideDistance,
+            duration: animConfig.duration * 0.8,
+            stagger: animConfig.stagger * 0.7,
+            ease: "power3.in"
+          });
+        }
       }
     }
   );
 
   if (conn) {
     const path = conn.path;
+    const dots = conn.dots;
     ScrollTrigger.create({
       trigger: panel,
       start: "top center",
@@ -162,9 +231,102 @@ document.querySelectorAll(".panel").forEach(panel => {
         gsap.to(path, {
           strokeDashoffset: 0,
           opacity: 1,
-          duration: 1,
+          duration: animConfig.pathDuration,
           ease: "power3.out"
         });
+
+        // Animate dots to flash in with a staggered delay
+        if (dots) {
+          dots.forEach((dot, idx) => {
+            gsap.fromTo(dot,
+              { opacity: 0, r: 2 },
+              {
+                opacity: 1,
+                r: isMobile ? 3 : 4,
+                duration: animConfig.pathDuration * 0.6,
+                delay: (animConfig.pathDuration * 0.3) + (idx * (isMobile ? 0.06 : 0.1)),
+                ease: "back.out"
+              }
+            );
+
+            // Add pulsing animation to dots
+            gsap.to(dot, {
+              opacity: 0.6,
+              r: isMobile ? 4 : 5,
+              duration: 0.8,
+              delay: (animConfig.pathDuration * 0.3) + (idx * (isMobile ? 0.06 : 0.1)),
+              yoyo: true,
+              repeat: -1,
+              ease: "sine.inOut"
+            });
+          });
+        }
+      },
+      onLeave: () => {
+        const len = path.getTotalLength();
+        gsap.to(path, {
+          strokeDashoffset: len,
+          opacity: 0,
+          duration: animConfig.pathDuration * 0.8,
+          ease: "power3.in"
+        });
+
+        // Animate dots to fade out
+        if (dots) {
+          dots.forEach((dot, idx) => {
+            gsap.to(dot, {
+              opacity: 0,
+              r: 2,
+              duration: animConfig.pathDuration * 0.6,
+              delay: idx * (isMobile ? 0.03 : 0.05),
+              ease: "back.in"
+            });
+          });
+        }
+      },
+      onEnterBack: () => {
+        const len = path.getTotalLength();
+        gsap.to(path, {
+          strokeDashoffset: 0,
+          opacity: 1,
+          duration: animConfig.pathDuration * 0.8,
+          ease: "power3.out"
+        });
+
+        // Animate dots to fade back in
+        if (dots) {
+          dots.forEach((dot, idx) => {
+            gsap.to(dot, {
+              opacity: 1,
+              r: isMobile ? 3 : 4,
+              duration: animConfig.pathDuration * 0.6,
+              delay: idx * (isMobile ? 0.03 : 0.05),
+              ease: "back.out"
+            });
+          });
+        }
+      },
+      onLeaveBack: () => {
+        const len = path.getTotalLength();
+        gsap.to(path, {
+          strokeDashoffset: len,
+          opacity: 0,
+          duration: animConfig.pathDuration * 0.8,
+          ease: "power3.in"
+        });
+
+        // Animate dots to fade out
+        if (dots) {
+          dots.forEach((dot, idx) => {
+            gsap.to(dot, {
+              opacity: 0,
+              r: 2,
+              duration: animConfig.pathDuration * 0.6,
+              delay: idx * (isMobile ? 0.03 : 0.05),
+              ease: "back.in"
+            });
+          });
+        }
       }
     });
   }

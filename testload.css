@@ -56,6 +56,21 @@ body::-webkit-scrollbar {
   gap:24px;
 }
 
+@media (max-width: 768px) {
+  .line {
+    gap: 12px;
+  }
+
+  .part {
+    display:inline-block;
+    opacity:0;
+    transform:translateX(80px);
+    will-change:transform, opacity;
+  }
+
+  .from-left { transform:translateX(-80px); }
+}
+
 .word {
   font-size:clamp(40px, 12vw, 150px);
   font-weight:800;
@@ -80,7 +95,7 @@ svg.connector {
 /* The actual line */
 svg.connector line {
   stroke:white;
-  stroke-width:4px;
+  stroke-width: 1px;
   stroke-linecap:round;
   transform-origin:left center;
   transform:scaleX(0); /* GSAP animates this */
@@ -97,7 +112,7 @@ svg.connector line {
 }
 .connector-line line {
   stroke: white;
-  stroke-width: 3px;
+  stroke-width: 1px;
   stroke-linecap: round;
 }
 
@@ -125,9 +140,15 @@ svg.connector line {
 }
 .global-connector path {
   stroke: white;
-  stroke-width: 3px;
+  stroke-width: 1px;
   stroke-linecap: round;
   stroke-linejoin: round;
   fill: none;
   opacity: 0;
+}
+
+/* Flashy connection dots */
+.connection-dot {
+  filter: drop-shadow(0 0 6px rgba(126, 227, 183, 0.8)) drop-shadow(0 0 12px rgba(126, 227, 183, 0.4));
+  will-change: r, opacity;
 }
