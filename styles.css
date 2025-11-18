@@ -1,0 +1,125 @@
+:root{
+  --bg:#000000;
+  --muted:#98A0B3;
+  --accent:#7ee3b7;
+  --glass: rgba(255,255,255,0.03);
+}
+*{box-sizing:border-box}
+html,body{height:100%}
+body{
+  margin:0;
+  font-family:Inter, ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial;
+  background: var(--bg);
+  color:#ffffff;
+  -webkit-font-smoothing:antialiased;
+  overflow-x:hidden;
+}
+
+/* fullscreen sections */
+.hero{min-height:100vh;display:flex;align-items:center;justify-content:center;position:relative;padding:20px;text-align:center}
+.hero-inner{max-width:920px}
+.logo{letter-spacing:6px;margin:0;font-size:1.6rem;font-weight:700;color:var(--accent)}
+.tagline{font-size:1.6rem;margin:8px 0 6px;color:#fff}
+.sub{color:var(--muted);margin-top:8px}
+.typed{display:inline-block;border-right:2px solid rgba(255,255,255,0.12);padding-right:6px;padding-left:6px}
+
+.down-arrow{--size:64px;position:absolute;left:50%;transform:translateX(-50%);bottom:22px;width:var(--size);height:var(--size);border-radius:999px;background:var(--glass);border:1px solid rgba(255,255,255,0.04);display:grid;place-items:center;color:var(--accent);cursor:pointer;transition:transform .25s ease, box-shadow .2s ease;backdrop-filter: blur(6px)}
+.down-arrow svg{transition:transform .2s ease}
+.down-arrow:hover{transform:translateX(-50%) translateY(-6px) scale(1.02);box-shadow:0 8px 30px rgba(0,0,0,0.5)}
+.down-arrow:hover svg{transform:translateY(2px) rotate(180deg)}
+@keyframes pulsey{0%{transform:translateX(-50%) translateY(0) scale(1)}50%{transform:translateX(-50%) translateY(-6px) scale(1.02)}100%{transform:translateX(-50%) translateY(0) scale(1)}}
+.down-arrow{animation:pulsey 3.2s ease-in-out infinite}
+
+/* up arrow (back to top) */
+.up-arrow{
+  position:fixed;right:20px;bottom:20px;width:48px;height:48px;border-radius:999px;display:grid;place-items:center;
+  background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.04);color:var(--accent);cursor:pointer;
+  transform:translateY(12px);opacity:0;transition:transform .28s ease,opacity .25s ease;z-index:60;backdrop-filter:blur(6px)
+}
+.up-arrow.visible{transform:translateY(0);opacity:1}
+
+/* panel base */
+.panel{min-height:100vh;display:flex;align-items:center;justify-content:center;padding:0;margin:0}
+.panel--fullscreen{background:transparent}
+.content-panel{padding:72px 20px;max-width:1200px;margin:0 auto}
+.panel--center{text-align:center}
+.lead{color:var(--muted);max-width:760px;margin:8px auto 24px}
+
+/* big sliding text */
+.big-container{width:100%;display:flex;align-items:center;justify-content:flex-start;padding-left:6vw}
+.bigtext{
+  font-weight:800;
+  letter-spacing:1px;
+  margin:0;
+  color:#fff;
+  opacity:0;
+  transition:transform .9s cubic-bezier(.2,.9,.2,1), opacity .6s ease;
+  font-size:clamp(56px, 18vw, 180px);
+  line-height:0.9;
+}
+
+/* directional entry classes */
+.from-left{transform:translateX(-30%)}
+.from-right{transform:translateX(30%)}
+.from-left.in-view, .from-right.in-view{transform:translateX(0);opacity:1}
+
+/* per-character animation helpers */
+.char{display:inline-block;opacity:0;will-change:transform,opacity;}
+.char.from-left{transform:translateX(-40px)}
+.char.from-right{transform:translateX(40px)}
+/* when parent gets .in-view, stagger characters based on --i */
+.in-view .char{transform:translateX(0);opacity:1;transition:transform .62s cubic-bezier(.2,.85,.25,1),opacity .32s ease;transition-delay:calc(var(--i) * 0.04s)}
+
+
+/* per-character animation for letter assembly */
+.char{
+  display:inline-block;
+  will-change:transform, opacity;
+  opacity:0;
+  /* default transform value will be overridden by directional classes */
+  transform:translateX(0);
+  transition:transform .6s cubic-bezier(.2,.9,.2,1), opacity .45s ease;
+  transition-delay: var(--d, 0s);
+}
+.char.from-left{transform:translateX(calc(var(--tx, -120%)))}
+.char.from-right{transform:translateX(calc(var(--tx, 120%)))}
+.flow-item.in-view .char{transform:translateX(0);opacity:1}
+
+
+/* per-character animation (staggered) */
+.char{display:inline-block;opacity:0;will-change:transform,opacity;transition:transform .65s cubic-bezier(.2,.9,.2,1),opacity .35s;transition-delay:var(--delay,0s)}
+.char.left{transform:translateX(-140px)}
+.char.right{transform:translateX(140px)}
+.char.space{display:inline-block;width:.5em;opacity:1;transform:none;transition:none}
+
+.bigtext.in-view .char,
+.flow-item.in-view .char,
+.from-left.in-view .char,
+.from-right.in-view .char{
+  transform:translateX(0);opacity:1
+}
+
+.pdf-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:18px}
+.pdf-card{background:linear-gradient(180deg, rgba(255,255,255,0.02), rgba(255,255,255,0.01));padding:16px;border-radius:12px;border:1px solid rgba(255,255,255,0.03)}
+.pdf-card h3{margin:0 0 8px;font-size:1rem;color:#dbeffd}
+.hint{font-size:.85rem;color:var(--muted);margin-top:8px}
+
+/* reveal on scroll for content cards */
+.reveal{opacity:0;transform:translateY(18px);transition:all .7s cubic-bezier(.2,.8,.2,1)}
+.reveal.in-view{opacity:1;transform:none}
+
+/* alternating slide-in text blocks */
+.story{max-width:1100px;margin:0 auto;display:flex;flex-direction:column;gap:64px}
+.story-row{display:flex}
+.text{max-width:720px;padding:6vh 6vw}
+.text h3{margin:0 0 12px;font-size:1.6rem}
+.text p{margin:0;color:var(--muted);line-height:1.6}
+.slide-left{opacity:0;transform:translateX(-20vw);transition:transform .8s cubic-bezier(.2,.9,.2,1),opacity .6s}
+.slide-right{opacity:0;transform:translateX(20vw);transition:transform .8s cubic-bezier(.2,.9,.2,1),opacity .6s}
+.slide-left.in-view, .slide-right.in-view{transform:translateX(0);opacity:1}
+
+@media (max-width:640px){
+  .logo{font-size:1.2rem}
+  .tagline{font-size:1.1rem}
+  .bigtext{font-size:clamp(40px, 24vw, 96px);padding-left:10px}
+}

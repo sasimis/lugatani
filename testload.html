@@ -1,0 +1,177 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<title>LUGATANI</title>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/ScrollTrigger.min.js"></script>
+
+<link rel="stylesheet" href="testload.css">
+</head>
+<body>
+
+</div>
+<div class="panel" id="p1">
+  <div class="txt">
+    <div class="line"><span class="part from-left">LOREM</span><span class="part">IPSUM</span></div>
+    <div class="line"><span class="part from-left">DOLOR</span><span class="part">SIT</span><span class="part">AMET</span></div>
+  </div>
+</div>
+
+<div class="panel" id="p2">
+  <div class="txt">
+    <div class="line"><span class="part from-left">CONSECTETUR</span></div>
+    <div class="line"><span class="part from-left">ADIPISCING</span><span class="part">ELIT</span></div>
+    <div class="line"><span class="part from-left">LATIN</span><span class="part">YES</span></div>
+  </div>
+</div>
+
+<div class="panel" id="p3">
+  <div class="txt">
+    <div class="line"><span class="part from-left">SLIDE</span><span class="part">THREE</span></div>
+    <div class="line"><span class="part from-left">ANIMATED</span><span class="part">TEXT</span></div>
+    <div class="line"><span class="part from-right">AN0THER</span><span class="part">DAY</span></div>
+
+</div>
+</div>
+
+<script>
+gsap.registerPlugin(ScrollTrigger);
+
+const allPaths = [];
+
+function createConnectors(panel) {
+  const old = panel.querySelectorAll("svg.connector-line");
+  old.forEach(o => o.remove());
+
+  const parts = Array.from(panel.querySelectorAll(".part"));
+  if (parts.length < 2) return;
+
+  const svg = document.createElementNS("http://www.w3.org/2000/svg", "svg");
+  svg.classList.add("connector-line");
+  svg.style.cssText = "position:absolute;top:0;left:0;width:100%;height:100%;pointer-events:none;z-index:5;";
+  panel.style.position = "relative";
+  panel.insertBefore(svg, panel.firstChild);
+
+  const path = document.createElementNS("http://www.w3.org/2000/svg", "path");
+  path.setAttribute("fill", "none");
+  path.setAttribute("stroke", "white");
+  path.setAttribute("stroke-width", "3");
+  path.style.opacity = "0";
+  svg.appendChild(path);
+
+  allPaths.push({ panel, svg, path, parts, animated: false });
+
+  requestAnimationFrame(positionAllPaths);
+
+  return { svg, path };
+}
+
+function positionAllPaths() {
+  allPaths.forEach(entry => {
+    const { svg, path, parts } = entry;
+    if (!parts || parts.length < 2) return;
+
+    const svgRect = svg.getBoundingClientRect();
+
+    // Build a list of center points for each word
+    const wordCenters = parts.map(p => {
+        const r = p.getBoundingClientRect();
+        return {
+            x: (r.left + r.right) / 2 - svgRect.left,
+            y: (r.top + r.bottom) / 2 - svgRect.top
+        };
+    });
+
+    // Path passes exactly through the center of each word
+    const pts = wordCenters;
+
+    const d = bezierFromPoints(pts);
+    path.setAttribute("d", d);
+
+    const len = path.getTotalLength();
+    path.style.strokeDasharray = len;
+
+    if (!entry.animated) {
+      path.style.strokeDashoffset = len;
+      path.style.opacity = 0;
+    }
+  });
+}
+
+// FIXED — TRUE Catmull-Rom → Bézier converter
+function bezierFromPoints(pts, tension = 0.5) {
+  if (pts.length < 2) return "";
+  let d = `M ${pts[0].x} ${pts[0].y}`;
+  for (let i = 0; i < pts.length - 1; i++) {
+    const p0 = pts[i - 1] || pts[i];
+    const p1 = pts[i];
+    const p2 = pts[i + 1];
+    const p3 = pts[i + 2] || p2;
+
+    const cp1 = {
+      x: p1.x + (p2.x - p0.x) * tension / 6,
+      y: p1.y + (p2.y - p0.y) * tension / 6
+    };
+    const cp2 = {
+      x: p2.x - (p3.x - p1.x) * tension / 6,
+      y: p2.y - (p3.y - p1.y) * tension / 6
+    };
+
+    d += ` C ${cp1.x} ${cp1.y}, ${cp2.x} ${cp2.y}, ${p2.x} ${p2.y}`;
+  }
+  return d;
+}
+
+// Reposition on resize
+window.addEventListener("resize", () => {
+  clearTimeout(window._r);
+  window._r = setTimeout(positionAllPaths, 80);
+});
+
+ScrollTrigger.addEventListener("refresh", positionAllPaths);
+
+// Create connectors + animate text + animate path
+document.querySelectorAll(".panel").forEach(panel => {
+  const parts = panel.querySelectorAll(".part");
+  const conn = createConnectors(panel);
+
+  gsap.fromTo(parts,
+    { opacity: 0, x: i => parts[i].classList.contains("from-left") ? -150 : 150 },
+    {
+      opacity: 1,
+      x: 0,
+      duration: 1,
+      stagger: 0.07,
+      ease: "power3.out",
+      scrollTrigger: {
+        trigger: panel,
+        start: "top center"
+      }
+    }
+  );
+
+  if (conn) {
+    const path = conn.path;
+    ScrollTrigger.create({
+      trigger: panel,
+      start: "top center",
+      onEnter: () => {
+        const len = path.getTotalLength();
+        gsap.to(path, {
+          strokeDashoffset: 0,
+          opacity: 1,
+          duration: 1,
+          ease: "power3.out"
+        });
+      }
+    });
+  }
+});
+
+</script>
+
+
+</body>
+</html>

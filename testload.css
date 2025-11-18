@@ -1,0 +1,133 @@
+html, body {
+  scrollbar-width: none; /* Firefox */
+  -ms-overflow-style: none; /* IE/Edge */
+}
+
+html::-webkit-scrollbar, 
+body::-webkit-scrollbar {
+  display: none; /* Chrome/Safari */
+}
+
+  body,html {
+    margin:0;
+    padding:0;
+    background:#111;
+    font-family:Montserrat, sans-serif;
+    height:100%;
+    overflow-x:hidden;
+  }
+
+  .panel {
+    height:100vh;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    flex-direction:column;
+    position:relative;
+    overflow:hidden;
+    z-index: 1;
+  }
+
+  .txt {
+    text-align:left;
+    line-height:0.9;
+  }
+
+  .line {
+    font-size:clamp(40px, 12vw, 150px);
+    font-weight:800;
+    color:#00c853;
+    transform:skewX(-10deg);
+    white-space:nowrap;
+    z-index: 10;
+  }
+
+  .part {
+    display:inline-block;
+    opacity:0;
+    transform:translateX(150px);
+    will-change:transform, opacity;
+  }
+
+  .from-left { transform:translateX(-150px); }
+  .line {
+  display:flex;
+  align-items:center;
+  gap:24px;
+}
+
+.word {
+  font-size:clamp(40px, 12vw, 150px);
+  font-weight:800;
+  color:#00c853;
+  transform:skewX(-10deg);
+  white-space:nowrap;
+  display:inline-block;
+  opacity:0;
+  transform:translateX(150px);
+  will-change:transform, opacity;
+}
+
+/* The SVG container */
+svg.connector {
+  height:6px;
+  width:120px; /* this will be overridden randomly in JS */
+  overflow:visible;
+  transform-origin:left center;
+  transform:rotate(0deg); /* this will also be randomized */
+}
+
+/* The actual line */
+svg.connector line {
+  stroke:white;
+  stroke-width:4px;
+  stroke-linecap:round;
+  transform-origin:left center;
+  transform:scaleX(0); /* GSAP animates this */
+  will-change:transform;
+}
+
+/* SVG connectors between words */
+.connector-line {
+  position: absolute;
+  top: 0;
+  left: 0;
+  z-index: 0 !important;
+  pointer-events: none;
+}
+.connector-line line {
+  stroke: white;
+  stroke-width: 3px;
+  stroke-linecap: round;
+}
+
+.part, .line {
+  position: relative;
+  z-index: 10;
+}
+
+
+/* Muted/half-faded word style */
+.part.muted {
+  color: rgba(0, 150, 60, 0.12); /* darker, very muted green */
+  opacity: 0.18;
+}
+
+/* Global connectors that span panels */
+.global-connector {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+  z-index: 4; /* below text (text is z-index:10) */
+}
+.global-connector path {
+  stroke: white;
+  stroke-width: 3px;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  fill: none;
+  opacity: 0;
+}
