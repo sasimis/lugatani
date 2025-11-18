@@ -13,4 +13,6 @@ preview the site locally
 suggest edits
 - you can comment on each file and I will see it
 
+- site is live at https://sasimis.github.io/lugatani/
+
 I included also your pdfs for reference.
