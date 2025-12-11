@@ -9,23 +9,26 @@ body::-webkit-scrollbar {
 }
 
   body,html {
-    margin:0;
-    padding:0;
-    background:#111;
-    font-family:Montserrat, sans-serif;
-    height:100%;
-    overflow-x:hidden;
+    margin: 0;
+    padding: 0;
+    background: #111;
+    font-family: Montserrat, sans-serif;
+    height: 100%;
+    overflow-x: hidden;
+    /* smooth scrolling + scroll snap for one-panel-per-scroll */
+    scroll-behavior: smooth;
+    scroll-snap-type: y mandatory;
   }
 
   .panel {
-    height:100vh;
-    display:flex;
-    align-items:center;
-    justify-content:center;
-    flex-direction:column;
-    position:relative;
-    overflow:hidden;
+    height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    position: relative;
     z-index: 1;
+    /* snap each panel to the viewport start */
+    scroll-snap-align: start;
   }
 
   .txt {
@@ -36,7 +39,7 @@ body::-webkit-scrollbar {
   .line {
     font-size:clamp(40px, 12vw, 150px);
     font-weight:800;
-    color:#00c853;
+    color:#009844;
     transform:skewX(-10deg);
     white-space:nowrap;
     z-index: 10;
@@ -74,7 +77,7 @@ body::-webkit-scrollbar {
 .word {
   font-size:clamp(40px, 12vw, 150px);
   font-weight:800;
-  color:#00c853;
+  color:#009844;
   transform:skewX(-10deg);
   white-space:nowrap;
   display:inline-block;
@@ -107,13 +110,20 @@ svg.connector line {
   position: absolute;
   top: 0;
   left: 0;
-  z-index: 0 !important;
+  z-index: 5;
   pointer-events: none;
 }
 .connector-line line {
   stroke: white;
   stroke-width: 1px;
   stroke-linecap: round;
+}
+.connector-line path {
+  stroke: white;
+  stroke-width: 1px;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  fill: none;
 }
 
 .part, .line {
@@ -151,6 +161,11 @@ svg.connector line {
 .connection-dot {
   filter: drop-shadow(0 0 6px rgba(126, 227, 183, 0.8)) drop-shadow(0 0 12px rgba(126, 227, 183, 0.4));
   will-change: r, opacity;
+}
+
+.connector-line circle {
+  fill: white;
+  stroke: none;
 }
 
 #loader {

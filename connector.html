@@ -1,0 +1,398 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<title>LUGATANI - Connector Animation</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/ScrollTrigger.min.js"></script>
+<style>
+* { margin: 0; padding: 0; box-sizing: border-box; }
+html, body {
+  background: #111;
+  font-family: Montserrat, sans-serif;
+  overflow-x: hidden;
+  scrollbar-width: none;
+}
+html::-webkit-scrollbar, body::-webkit-scrollbar { display: none; }
+
+.loader-overlay {
+  position: fixed;
+  top: 0; left: 0;
+  width: 100%; height: 100%;
+  background: #009844;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  z-index: 9999;
+  transition: opacity 0.6s ease, visibility 0.6s ease;
+}
+.loader-overlay.hidden {
+  opacity: 0;
+  visibility: hidden;
+  pointer-events: none;
+}
+.loader-percent {
+  font-size: clamp(24px, 5vw, 48px);
+  font-weight: 600;
+  color: white;
+  margin-bottom: 10px;
+}
+.loader-line {
+  width: 2px;
+  height: 0;
+  background: white;
+  transition: height 0.1s linear;
+}
+.loader-arrow {
+  margin-top: 20px;
+  opacity: 0;
+  transform: translateY(-10px);
+  transition: opacity 0.4s ease, transform 0.4s ease;
+  cursor: pointer;
+}
+.loader-arrow.visible {
+  opacity: 1;
+  transform: translateY(0);
+}
+.loader-arrow img {
+  width: 24px;
+  height: auto;
+  filter: brightness(0) invert(1);
+  transition: filter 0.3s ease;
+}
+.loader-arrow:hover img {
+  filter: brightness(0);
+}
+
+.panel {
+  height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #111;
+}
+
+.txt { text-align: left; line-height: 0.95; overflow: hidden; padding: 40px 60px; }
+
+.line {
+  font-size: clamp(36px, 9vw, 110px);
+  font-weight: 800;
+  color: #009844;
+  transform: skewX(-10deg);
+  display: flex;
+  gap: 10px;
+  margin-bottom: 5px;
+  justify-content: center;
+}
+
+.word { 
+  display: inline-block; 
+  transition: color 0.4s ease;
+  opacity: 0;
+}
+.word.from-left {
+  transform: translateX(-100vw);
+}
+.word.from-right {
+  transform: translateX(100vw);
+}
+.word.passed { color: #006830; }
+
+.connection-point { color: #009844; transition: color 0.4s ease; }
+.connection-point.passed { color: #00c853; }
+
+svg.connector-svg {
+  position: fixed;
+  top: 0; left: 0;
+  width: 100%; height: 100%;
+  pointer-events: none;
+  z-index: 50;
+}
+
+svg.connector-svg path {
+  stroke: white;
+  stroke-width: 2px;
+  stroke-linecap: round;
+  fill: none;
+}
+
+svg.connector-svg circle {
+  fill: white;
+  filter: drop-shadow(0 0 8px rgba(126, 227, 183, 0.9));
+}
+
+.next-section {
+  height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #1a1a1a;
+}
+.next-section h2 { color: #009844; font-size: 3rem; }
+</style>
+</head>
+<body>
+
+<div class="loader-overlay" id="loader">
+  <div class="loader-percent" id="loader-percent">0%</div>
+  <div class="loader-line" id="loader-line"></div>
+  <div class="loader-arrow" id="loader-arrow">
+    <img src="arrow.png" alt="arrow" id="arrow-img">
+  </div>
+</div>
+
+<svg class="connector-svg" id="connector-svg">
+  <path id="connector-path"></path>
+  <path id="exit-line"></path>
+  <circle id="dot-1" r="5" opacity="0"></circle>
+  <circle id="dot-2" r="5" opacity="0"></circle>
+  <circle id="dot-3" r="5" opacity="0"></circle>
+  <circle id="dot-4" r="5" opacity="0"></circle>
+  <circle id="dot-5" r="5" opacity="0"></circle>
+  <circle id="dot-6" r="5" opacity="0"></circle>
+</svg>
+
+<section class="panel" id="main-panel">
+  <div class="txt">
+    <div class="line">
+      <span class="word from-left">LO<span class="connection-point" id="letter-1">R</span>EM</span>
+      <span class="word from-right">IPSUM</span>
+    </div>
+    <div class="line">
+      <span class="word from-left">DOLOR</span>
+      <span class="word from-right">AMET</span>
+    </div>
+    <div class="line">
+      <span class="word from-right">CONSEC<span class="connection-point" id="letter-4">T</span>ET<span class="connection-point" id="letter-5">U</span>R</span>
+    </div>
+    <div class="line">
+      <span class="word from-left">ADIPI<span class="connection-point" id="letter-6">S</span>CING</span>
+      <span class="word from-right">ELIT</span>
+    </div>
+  </div>
+</section>
+
+<section class="next-section">
+  <h2>Continue scrolling...</h2>
+</section>
+
+<script>
+gsap.registerPlugin(ScrollTrigger);
+
+var loader = document.getElementById('loader');
+var loaderPercent = document.getElementById('loader-percent');
+var loaderLine = document.getElementById('loader-line');
+var loaderArrow = document.getElementById('loader-arrow');
+var percent = 0;
+var maxLineHeight = 100;
+
+function animateLoader() {
+  var interval = setInterval(function() {
+    percent += 1;
+    loaderPercent.textContent = percent + '%';
+    loaderLine.style.height = (percent / 100) * maxLineHeight + 'px';
+    if (percent >= 100) {
+      clearInterval(interval);
+      loaderArrow.classList.add('visible');
+    }
+  }, 25);
+}
+
+loaderArrow.addEventListener('click', function() {
+  loader.classList.add('hidden');
+  document.body.style.overflow = '';
+  // Start automatic word reveal animation after loader closes
+  setTimeout(startWordRevealAnimation, 600);
+});
+
+document.body.style.overflow = 'hidden';
+animateLoader();
+
+var panel = document.getElementById('main-panel');
+var connPath = document.getElementById('connector-path');
+var exitLine = document.getElementById('exit-line');
+var letterIds = ['letter-1', 'letter-2', 'letter-3', 'letter-4', 'letter-5', 'letter-6'];
+var dots = [];
+for (var i = 0; i < letterIds.length; i++) {
+  dots.push(document.getElementById('dot-' + (i + 1)));
+}
+
+// Get all words for animation
+var wordsFromLeft = document.querySelectorAll('.word.from-left');
+var wordsFromRight = document.querySelectorAll('.word.from-right');
+var textAnimationComplete = false;
+
+// Reset state on page load/reload
+function resetState() {
+  wordsFromLeft.forEach(function(word) {
+    word.style.opacity = 0;
+    word.style.transform = 'translateX(-100vw)';
+  });
+  wordsFromRight.forEach(function(word) {
+    word.style.opacity = 0;
+    word.style.transform = 'translateX(100vw)';
+  });
+  connPath.style.opacity = 0;
+  exitLine.style.opacity = 0;
+  dots.forEach(function(dot) {
+    if (dot) dot.style.opacity = 0;
+  });
+  textAnimationComplete = false;
+}
+
+// Reset on page load
+resetState();
+// Also reset if user scrolls to top
+window.addEventListener('beforeunload', function() {
+  window.scrollTo(0, 0);
+});
+
+// Automatic word reveal animation
+function startWordRevealAnimation() {
+  var allWords = document.querySelectorAll('.word');
+  var duration = 2.0; // seconds for each word (slower)
+  var stagger = 0.3; // delay between words (slow)
+  
+  // Animate words from left
+  gsap.to(wordsFromLeft, {
+    opacity: 1,
+    x: 0,
+    duration: duration,
+    stagger: stagger,
+    ease: 'power2.out'
+  });
+  
+  // Animate words from right (slightly delayed)
+  gsap.to(wordsFromRight, {
+    opacity: 1,
+    x: 0,
+    duration: duration,
+    stagger: stagger,
+    ease: 'power2.out',
+    delay: 0.2,
+    onComplete: function() {
+      textAnimationComplete = true;
+      // Refresh ScrollTrigger after text is in place
+      setTimeout(function() { ScrollTrigger.refresh(); }, 100);
+    }
+  });
+}
+
+function getLetterCenter(id) {
+  var el = document.getElementById(id);
+  if (!el) return null;
+  var rect = el.getBoundingClientRect();
+  return { x: rect.left + rect.width / 2, y: rect.top + rect.height / 2 };
+}
+
+function buildPath() {
+  var points = [];
+  for (var i = 0; i < letterIds.length; i++) {
+    var p = getLetterCenter(letterIds[i]);
+    if (p) points.push(p);
+  }
+  if (points.length < 2) return '';
+  var d = 'M ' + points[0].x + ' ' + points[0].y;
+  for (var j = 1; j < points.length; j++) {
+    var prev = points[j - 1], curr = points[j];
+    d += ' Q ' + ((prev.x + curr.x) / 2) + ' ' + ((prev.y + curr.y) / 2) + ', ' + curr.x + ' ' + curr.y;
+  }
+  return d;
+}
+
+function updateConnector(progress) {
+  var points = [];
+  for (var i = 0; i < letterIds.length; i++) {
+    var p = getLetterCenter(letterIds[i]);
+    if (p) points.push(p);
+  }
+  if (points.length < 2) return;
+  
+  connPath.setAttribute('d', buildPath());
+  var len = connPath.getTotalLength();
+  if (len > 0) {
+    connPath.style.strokeDasharray = len;
+    connPath.style.strokeDashoffset = len * (1 - progress);
+    connPath.style.opacity = progress > 0.01 ? 1 : 0;
+  }
+  
+  for (var idx = 0; idx < points.length; idx++) {
+    var pt = points[idx];
+    if (dots[idx]) {
+      dots[idx].setAttribute('cx', pt.x);
+      dots[idx].setAttribute('cy', pt.y);
+      dots[idx].style.opacity = progress >= (idx + 1) / points.length ? 0.9 : 0;
+    }
+    var letter = document.getElementById(letterIds[idx]);
+    if (letter) {
+      if (progress >= (idx + 1) / points.length) {
+        letter.classList.add('passed');
+      } else {
+        letter.classList.remove('passed');
+      }
+    }
+  }
+}
+
+function drawExitLine(progress) {
+  // Get last letter position
+  var lastLetter = document.getElementById(letterIds[letterIds.length - 1]);
+  if (!lastLetter) return;
+  
+  var rect = lastLetter.getBoundingClientRect();
+  var startX = rect.left + rect.width / 2;
+  var startY = rect.top + rect.height / 2;
+  var endY = window.innerHeight; // Go to bottom of viewport
+  
+  var currentY = startY + (endY - startY) * progress;
+  
+  exitLine.setAttribute('d', 'M ' + startX + ' ' + startY + ' L ' + startX + ' ' + currentY);
+  exitLine.style.opacity = 1;
+}
+
+ScrollTrigger.create({
+  trigger: panel,
+  start: 'top top',
+  end: '+=400%',
+  pin: true,
+  pinSpacing: true,
+  onUpdate: function(self) {
+    var progress = self.progress;
+    
+    // Only animate if text animation is complete
+    if (!textAnimationComplete) {
+      connPath.style.opacity = 0;
+      exitLine.style.opacity = 0;
+      return;
+    }
+    
+    // 0% to 80%: connector line animation
+    if (progress <= 0.8) {
+      var connectorProgress = progress / 0.8;
+      updateConnector(connectorProgress);
+      exitLine.style.opacity = 0;
+    }
+    // 80% to 100%: exit line going down
+    else {
+      // Ensure connector is complete
+      updateConnector(1);
+      
+      // Exit line animation
+      var exitProgress = (progress - 0.8) / 0.2;
+      drawExitLine(exitProgress);
+    }
+  }
+});
+
+window.addEventListener('resize', function() { ScrollTrigger.refresh(); });
+window.addEventListener('load', function() { 
+  setTimeout(function() { 
+    ScrollTrigger.refresh(); 
+    updateConnector(0); 
+  }, 500); 
+});
+</script>
+
+</body>
+</html>

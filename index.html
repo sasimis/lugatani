@@ -63,14 +63,32 @@
 }
 
 @media (max-width: 600px) {
-  #loader-text {
+  .loader-text {
     font-size: 2.2rem;
   }
   
-  #loader-arrow svg {
+  .loader-arrow svg {
     width: 60px;
     height: 90px;
   }
+}
+
+/* Color transition effect for parts */
+.part {
+  transition: color 0.6s ease, background 0.6s ease;
+  color: #009844;
+}
+
+.part.color-dark {
+  color: #4a4a4a;
+  background: linear-gradient(135deg, #4a4a4a 0%, #2a2a2a 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+.part.color-green {
+  color: #009844;
 }
 </style>
 </head>
@@ -93,28 +111,20 @@
   </div>
 </div>
 
-<div class="panel" id="p1">
+
+<div class="panel" id="single-slide">
   <div class="txt">
+    <div class="line"><span class="part from-left">test</span></div>
+    <div class="line"><span class="part">&nbsp;&nbsp;&nbsp;&nbsp;test</span></div>
     <div class="line"><span class="part from-left">LOREM</span><span class="part">IPSUM</span></div>
     <div class="line"><span class="part from-left">DOLOR</span><span class="part">SIT</span><span class="part">AMET</span></div>
-  </div>
-</div>
-
-<div class="panel" id="p2">
-  <div class="txt">
     <div class="line"><span class="part from-left">CONSECTETUR</span></div>
     <div class="line"><span class="part from-left">ADIPISCING</span><span class="part">ELIT</span></div>
     <div class="line"><span class="part from-left">LATIN</span><span class="part">YES</span></div>
-  </div>
-</div>
-
-<div class="panel" id="p3">
-  <div class="txt">
     <div class="line"><span class="part from-left">SLIDE</span><span class="part">THREE</span></div>
     <div class="line"><span class="part from-left">ANIMATED</span><span class="part">TEXT</span></div>
     <div class="line"><span class="part from-right">AN0THER</span><span class="part">DAY</span></div>
-
-</div>
+  </div>
 </div>
 
 <script>
@@ -131,7 +141,8 @@ function createConnectors(panel) {
 
   const svg = document.createElementNS("http://www.w3.org/2000/svg", "svg");
   svg.classList.add("connector-line");
-  svg.style.cssText = "position:absolute;top:0;left:0;width:100%;height:100%;pointer-events:none;z-index:5;";
+  svg.style.cssText = "position:absolute;top:0;left:0;width:100%;height:100%;pointer-events:none;z-index:5;overflow:visible;border:2px solid red;";
+  svg.setAttribute("preserveAspectRatio", "none");
   panel.style.position = "relative";
   panel.insertBefore(svg, panel.firstChild);
 
@@ -162,20 +173,23 @@ function createConnectors(panel) {
 }
 
 function positionAllPaths() {
-  allPaths.forEach(entry => {
+  allPaths.forEach((entry, idx) => {
     const { svg, path, parts, dots } = entry;
     if (!parts || parts.length < 2) return;
 
     const svgRect = svg.getBoundingClientRect();
+    
+  // Set SVG viewBox to match panel dimensions
+  svg.setAttribute("viewBox", `0 0 ${svgRect.width} ${svgRect.height}`);
 
-    // Build a list of center points for each word
-    const wordCenters = parts.map(p => {
-        const r = p.getBoundingClientRect();
-        return {
-            x: (r.left + r.right) / 2 - svgRect.left,
-            y: (r.top + r.bottom) / 2 - svgRect.top
-        };
-    });
+  // Build a list of center points for each word
+  const wordCenters = parts.map(p => {
+    const r = p.getBoundingClientRect();
+    const x = (r.left + r.right) / 2 - svgRect.left;
+    const y = (r.top + r.bottom) / 2 - svgRect.top;
+    console.log('Word:', p.textContent, 'Center:', x, y);
+    return { x, y };
+  });
 
     // Path passes exactly through the center of each word
     const pts = wordCenters;
@@ -185,18 +199,21 @@ function positionAllPaths() {
 
     // Position dots at each connection point
     if (dots) {
-      dots.forEach((dot, idx) => {
-        dot.setAttribute("cx", pts[idx].x);
-        dot.setAttribute("cy", pts[idx].y);
+      dots.forEach((dot, idot) => {
+        dot.setAttribute("cx", pts[idot].x);
+        dot.setAttribute("cy", pts[idot].y);
       });
     }
 
     const len = path.getTotalLength();
+    console.log(`Panel ${idx}: path length = ${len}, parts = ${parts.length}`);
     path.style.strokeDasharray = len;
-
-    if (!entry.animated) {
-      path.style.strokeDashoffset = len;
-      path.style.opacity = 0;
+    path.style.opacity = 1;
+    if (dots) {
+      dots.forEach((dot, idot) => {
+        console.log('Dot', idot, 'at', pts[idot].x, pts[idot].y);
+        dot.setAttribute('opacity', '1');
+      });
     }
   });
 }
@@ -225,6 +242,18 @@ function bezierFromPoints(pts, tension = 0.5) {
   return d;
 }
 
+// Helper: interpolate between two colors
+function lerpColor(a, b, t) {
+  const ah = a.replace('#', '');
+  const bh = b.replace('#', '');
+  const ar = parseInt(ah.substring(0,2), 16), ag = parseInt(ah.substring(2,4), 16), ab = parseInt(ah.substring(4,6), 16);
+  const br = parseInt(bh.substring(0,2), 16), bg = parseInt(bh.substring(2,4), 16), bb = parseInt(bh.substring(4,6), 16);
+  const rr = Math.round(ar + (br-ar)*t);
+  const rg = Math.round(ag + (bg-ag)*t);
+  const rb = Math.round(ab + (bb-ab)*t);
+  return `rgb(${rr},${rg},${rb})`;
+}
+
 // Reposition on resize
 window.addEventListener("resize", () => {
   clearTimeout(window._r);
@@ -244,174 +273,78 @@ const animConfig = {
   pathDuration: isMobile ? 0.6 : 1
 };
 
-// Create connectors + animate text + animate path
-document.querySelectorAll(".panel").forEach(panel => {
-  const parts = panel.querySelectorAll(".part");
-  const conn = createConnectors(panel);
 
-  gsap.fromTo(parts,
-    { opacity: 0, x: i => parts[i].classList.contains("from-left") ? -animConfig.slideDistance : animConfig.slideDistance },
-    {
-      opacity: 1,
-      x: 0,
-      duration: animConfig.duration,
-      stagger: animConfig.stagger,
-      ease: "power3.out",
-      scrollTrigger: {
-        trigger: panel,
-        start: "top center",
-        end: "bottom center",
-        onEnter: () => {
-          gsap.to(parts, {
-            opacity: 1,
-            x: 0,
-            duration: animConfig.duration * 0.8,
-            stagger: animConfig.stagger,
-            ease: "power3.out"
-          });
-        },
-        onLeave: () => {
-          gsap.to(parts, {
-            opacity: 0,
-            x: i => parts[i].classList.contains("from-left") ? -animConfig.slideDistance : animConfig.slideDistance,
-            duration: animConfig.duration * 0.8,
-            stagger: animConfig.stagger * 0.7,
-            ease: "power3.in"
-          });
-        },
-        onEnterBack: () => {
-          gsap.to(parts, {
-            opacity: 1,
-            x: 0,
-            duration: animConfig.duration * 0.8,
-            stagger: animConfig.stagger * 0.7,
-            ease: "power3.out"
-          });
-        },
-        onLeaveBack: () => {
-          gsap.to(parts, {
-            opacity: 0,
-            x: i => parts[i].classList.contains("from-left") ? -animConfig.slideDistance : animConfig.slideDistance,
-            duration: animConfig.duration * 0.8,
-            stagger: animConfig.stagger * 0.7,
-            ease: "power3.in"
-          });
-        }
-      }
-    }
-  );
 
-  if (conn) {
-    const path = conn.path;
-    const dots = conn.dots;
-    ScrollTrigger.create({
+// Single global connector and scroll-driven animation
+const panel = document.querySelector('.panel');
+const parts = Array.from(panel.querySelectorAll('.part'));
+const conn = createConnectors(panel);
+
+// Animate text in as you scroll (one letter/word at a time)
+gsap.fromTo(parts,
+  { opacity: 0, x: i => parts[i].classList.contains('from-left') ? -animConfig.slideDistance : animConfig.slideDistance },
+  {
+    opacity: 1,
+    x: 0,
+    duration: animConfig.duration,
+    stagger: animConfig.stagger,
+    ease: 'power3.out',
+    scrollTrigger: {
       trigger: panel,
-      start: "top center",
-      onEnter: () => {
-        const len = path.getTotalLength();
-        gsap.to(path, {
-          strokeDashoffset: 0,
-          opacity: 1,
-          duration: animConfig.pathDuration,
-          ease: "power3.out"
-        });
-
-        // Animate dots to flash in with a staggered delay
-        if (dots) {
-          dots.forEach((dot, idx) => {
-            gsap.fromTo(dot,
-              { opacity: 0, r: 2 },
-              {
-                opacity: 1,
-                r: isMobile ? 3 : 4,
-                duration: animConfig.pathDuration * 0.6,
-                delay: (animConfig.pathDuration * 0.3) + (idx * (isMobile ? 0.06 : 0.1)),
-                ease: "back.out"
-              }
-            );
-
-            // Add pulsing animation to dots
-            gsap.to(dot, {
-              opacity: 0.6,
-              r: isMobile ? 4 : 5,
-              duration: 0.8,
-              delay: (animConfig.pathDuration * 0.3) + (idx * (isMobile ? 0.06 : 0.1)),
-              yoyo: true,
-              repeat: -1,
-              ease: "sine.inOut"
-            });
-          });
-        }
-      },
-      onLeave: () => {
-        const len = path.getTotalLength();
-        gsap.to(path, {
-          strokeDashoffset: len,
-          opacity: 0,
-          duration: animConfig.pathDuration * 0.8,
-          ease: "power3.in"
-        });
-
-        // Animate dots to fade out
-        if (dots) {
-          dots.forEach((dot, idx) => {
-            gsap.to(dot, {
-              opacity: 0,
-              r: 2,
-              duration: animConfig.pathDuration * 0.6,
-              delay: idx * (isMobile ? 0.03 : 0.05),
-              ease: "back.in"
-            });
-          });
-        }
-      },
-      onEnterBack: () => {
-        const len = path.getTotalLength();
-        gsap.to(path, {
-          strokeDashoffset: 0,
-          opacity: 1,
-          duration: animConfig.pathDuration * 0.8,
-          ease: "power3.out"
-        });
-
-        // Animate dots to fade back in
-        if (dots) {
-          dots.forEach((dot, idx) => {
-            gsap.to(dot, {
-              opacity: 1,
-              r: isMobile ? 3 : 4,
-              duration: animConfig.pathDuration * 0.6,
-              delay: idx * (isMobile ? 0.03 : 0.05),
-              ease: "back.out"
-            });
-          });
-        }
-      },
-      onLeaveBack: () => {
-        const len = path.getTotalLength();
-        gsap.to(path, {
-          strokeDashoffset: len,
-          opacity: 0,
-          duration: animConfig.pathDuration * 0.8,
-          ease: "power3.in"
-        });
-
-        // Animate dots to fade out
-        if (dots) {
-          dots.forEach((dot, idx) => {
-            gsap.to(dot, {
-              opacity: 0,
-              r: 2,
-              duration: animConfig.pathDuration * 0.6,
-              delay: idx * (isMobile ? 0.03 : 0.05),
-              ease: "back.in"
-            });
-          });
-        }
-      }
-    });
+      start: 'top top',
+      end: 'bottom bottom',
+      scrub: true
+    }
   }
-});
+);
+
+if (conn) {
+  const path = conn.path;
+  const dots = conn.dots;
+  // Animate path and dots as you scroll through the single panel
+  ScrollTrigger.create({
+    trigger: panel,
+    start: 'top top',
+    end: 'bottom bottom',
+    scrub: true,
+    onUpdate: (self) => {
+      const total = parts.length;
+      const progress = self.progress;
+      // Determine how many letters/words to connect
+      const currentIdx = Math.floor(progress * total);
+      // Build a path that connects only up to currentIdx
+      if (currentIdx < 1) {
+        path.setAttribute('d', '');
+        path.setAttribute('opacity', '0');
+        dots.forEach(dot => dot.setAttribute('opacity', '0'));
+        return;
+      }
+      // Get the current positions
+      const svgRect = conn.svg.getBoundingClientRect();
+      const pts = parts.slice(0, currentIdx + 1).map(p => {
+        const r = p.getBoundingClientRect();
+        return {
+          x: (r.left + r.right) / 2 - svgRect.left,
+          y: (r.top + r.bottom) / 2 - svgRect.top
+        };
+      });
+      // Build the path
+      const d = bezierFromPoints(pts);
+      path.setAttribute('d', d);
+      path.setAttribute('opacity', '1');
+      // Show dots only up to currentIdx
+      dots.forEach((dot, idx) => {
+        if (idx <= currentIdx) {
+          dot.setAttribute('cx', pts[idx]?.x || 0);
+          dot.setAttribute('cy', pts[idx]?.y || 0);
+          dot.setAttribute('opacity', '0.7');
+        } else {
+          dot.setAttribute('opacity', '0');
+        }
+      });
+    }
+  });
+}
 
 const loader = document.getElementById("loader");
 const loaderText = document.getElementById("loader-text");
@@ -457,6 +390,65 @@ window.addEventListener("load", () => {
 })();
 </script>
 
+<script>
+// one-scroll-per-section wheel/touch snap fallback
+(function(){
+  const panels = Array.from(document.querySelectorAll('.panel'));
+  if(!panels.length) return;
+
+  let isScrolling = false;
+
+  function getCurrentIndex(){
+    // choose the panel whose top is nearest to viewport top
+    let best = 0, bestDist = Infinity;
+    panels.forEach((p, i) => {
+      const rect = p.getBoundingClientRect();
+      const dist = Math.abs(rect.top);
+      if(dist < bestDist){ bestDist = dist; best = i; }
+    });
+    return best;
+  }
+
+  function scrollToIndex(i){
+    i = Math.max(0, Math.min(panels.length - 1, i));
+    if(isScrolling) return;
+    isScrolling = true;
+    panels[i].scrollIntoView({ behavior: 'smooth' });
+    // unlock after animation should be finished (tweak if needed)
+    setTimeout(() => { isScrolling = false; }, 700);
+  }
+
+  // Wheel handler
+  window.addEventListener('wheel', function(e){
+    if(isScrolling) return;
+    // ignore tiny scroll deltas
+    if(Math.abs(e.deltaY) < 10) return;
+    e.preventDefault();
+    const idx = getCurrentIndex();
+    if(e.deltaY > 0) scrollToIndex(idx + 1);
+    else scrollToIndex(idx - 1);
+  }, { passive: false });
+
+  // Touch handler (basic swipe detection)
+  let touchStartY = null;
+  window.addEventListener('touchstart', function(e){
+    touchStartY = e.touches && e.touches[0] ? e.touches[0].clientY : null;
+  }, { passive: true });
+
+  window.addEventListener('touchend', function(e){
+    if(isScrolling || touchStartY === null) return;
+    const touchEndY = e.changedTouches && e.changedTouches[0] ? e.changedTouches[0].clientY : null;
+    if(touchEndY === null) return;
+    const dy = touchStartY - touchEndY;
+    if(Math.abs(dy) < 40) return;
+    const idx = getCurrentIndex();
+    if(dy > 0) scrollToIndex(idx + 1);
+    else scrollToIndex(idx - 1);
+    touchStartY = null;
+  }, { passive: true });
+
+})();
+</script>
 
 </body>
 </html>
