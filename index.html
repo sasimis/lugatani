@@ -112,22 +112,25 @@ html::-webkit-scrollbar, body::-webkit-scrollbar { display: none; }
 }
 
 .txt { 
-  text-align: left; 
+  text-align: center; 
   line-height: 0.95; 
   overflow: visible; 
-  padding: 40px 80px;
-  margin-left: 5%;
+  padding: 20px;
+  margin: 0 auto;
+  max-width: 100%;
+  width: 100%;
 }
 
 .line {
-  font-size: clamp(36px, 9vw, 110px);
+  font-size: clamp(28px, 8vw, 110px);
   font-weight: 800;
   color: #009844;
   transform: skewX(-10deg);
   display: flex;
-  gap: 10px;
+  gap: 8px;
   margin-bottom: 5px;
   justify-content: center;
+  flex-wrap: nowrap;
 }
 
 .word { 
@@ -389,13 +392,13 @@ svg.connector-svg circle {
   }
   
   .txt {
-    padding: 15px 10px;
+    padding: 10px 5px;
   }
   
   .line {
-    font-size: clamp(24px, 14vw, 70px);
-    gap: 4px;
-    margin-bottom: 3px;
+    font-size: clamp(18px, 11vw, 60px);
+    gap: 3px;
+    margin-bottom: 2px;
   }
   
   .hamburger-menu {
@@ -582,7 +585,16 @@ loaderArrow.addEventListener('click', function() {
   setTimeout(startWordRevealAnimation, 600);
 });
 
+// Force scroll to top and reset state on page load/reload
+window.scrollTo(0, 0);
 document.body.style.overflow = 'hidden';
+
+// Hide hamburger initially (just remove class, don't set inline style)
+var hamburgerInit = document.getElementById('hamburger');
+if (hamburgerInit) {
+  hamburgerInit.classList.remove('visible');
+}
+
 waitForPageReady();
 animateLoader();
 
@@ -1235,7 +1247,25 @@ ScrollTrigger.create({
 });
 
 window.addEventListener('resize', function() { ScrollTrigger.refresh(); });
+
+// Comprehensive reset on page load
 window.addEventListener('load', function() { 
+  // Force scroll to top
+  window.scrollTo(0, 0);
+  
+  // Reset hamburger (just remove class, don't set inline opacity)
+  var hamburger = document.getElementById('hamburger');
+  hamburger.classList.remove('visible');
+  
+  // Reset panel background
+  panel.style.background = '#111';
+  
+  // Reset vertical line
+  var verticalLine = document.getElementById('vertical-line');
+  if (verticalLine) {
+    verticalLine.style.opacity = '0';
+  }
+  
   setTimeout(function() { 
     ScrollTrigger.refresh(); 
     updateConnector(0); 
@@ -1281,6 +1311,20 @@ window.addEventListener('touchstart', resetIdleTimer);
 // Start the idle timer after page loads
 window.addEventListener('load', function() {
   setTimeout(resetIdleTimer, 1000);
+});
+
+// Scroll to top before page unloads (helps with reload/back button)
+window.addEventListener('beforeunload', function() {
+  window.scrollTo(0, 0);
+});
+
+// Also handle page show for back/forward cache
+window.addEventListener('pageshow', function(event) {
+  if (event.persisted) {
+    // Page was restored from back/forward cache
+    window.scrollTo(0, 0);
+    location.reload();
+  }
 });
 </script>
 
