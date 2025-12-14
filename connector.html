@@ -59,15 +59,24 @@ html::-webkit-scrollbar, body::-webkit-scrollbar { display: none; }
   transition: height 0.1s linear;
 }
 .loader-arrow {
-  margin-top: 8px;
+  margin-top: 2px; /* Closer to the line */
   opacity: 0;
   transform: translateY(-10px);
-  transition: opacity 0.4s ease, transform 0.4s ease;
+  transition: opacity 0.4s ease;
   cursor: pointer;
 }
 .loader-arrow.visible {
   opacity: 1;
   transform: translateY(0);
+  animation: bounceArrow 1.2s ease-in-out infinite;
+}
+@keyframes bounceArrow {
+  0%, 100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(8px);
+  }
 }
 .loader-arrow img {
   width: 40px;
