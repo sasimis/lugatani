@@ -4,6 +4,13 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
 <title>LUGATANI - Connector Animation</title>
+<script>
+  // Prevent scroll restoration on reload (must be before GSAP loads)
+  if ('scrollRestoration' in history) {
+    history.scrollRestoration = 'manual';
+  }
+  window.scrollTo(0, 0);
+</script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/ScrollTrigger.min.js"></script>
 
@@ -594,6 +601,25 @@ var hamburgerInit = document.getElementById('hamburger');
 if (hamburgerInit) {
   hamburgerInit.classList.remove('visible');
 }
+
+// Reset panel background
+var panelInit = document.getElementById('main-panel');
+if (panelInit) {
+  panelInit.style.background = '#111';
+}
+
+// Reset vertical line
+var verticalLineInit = document.getElementById('vertical-line');
+if (verticalLineInit) {
+  verticalLineInit.style.opacity = '0';
+}
+
+// Reset all words to initial state
+document.querySelectorAll('.word').forEach(function(word) {
+  word.style.opacity = '0';
+  word.style.transform = '';
+  word.style.color = '#009844';
+});
 
 waitForPageReady();
 animateLoader();
@@ -1318,12 +1344,38 @@ window.addEventListener('beforeunload', function() {
   window.scrollTo(0, 0);
 });
 
-// Also handle page show for back/forward cache
+// Also handle page show for back/forward cache (important for mobile Safari)
 window.addEventListener('pageshow', function(event) {
+  // Always reset scroll position
+  window.scrollTo(0, 0);
+  
   if (event.persisted) {
-    // Page was restored from back/forward cache
-    window.scrollTo(0, 0);
+    // Page was restored from back/forward cache - force full reload
     location.reload();
+  } else {
+    // Normal page load on mobile - ensure reset
+    var hamburger = document.getElementById('hamburger');
+    if (hamburger) hamburger.classList.remove('visible');
+    
+    var panel = document.getElementById('main-panel');
+    if (panel) panel.style.background = '#111';
+    
+    var verticalLine = document.getElementById('vertical-line');
+    if (verticalLine) verticalLine.style.opacity = '0';
+  }
+});
+
+// For iOS Safari - handle visibility change
+document.addEventListener('visibilitychange', function() {
+  if (document.visibilityState === 'visible') {
+    // User came back to the page - check if we need to reset
+    var hamburger = document.getElementById('hamburger');
+    var loader = document.getElementById('loader');
+    
+    // If hamburger is visible but loader is not hidden, something is wrong - reload
+    if (hamburger && hamburger.classList.contains('visible') && loader && !loader.classList.contains('hidden')) {
+      location.reload();
+    }
   }
 });
 </script>
