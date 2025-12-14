@@ -225,6 +225,34 @@ svg.connector-svg circle {
   pointer-events: auto;
 }
 
+/* Track & Trace link below hamburger */
+.track-trace-link {
+  position: fixed;
+  top: calc(50% + 80px);
+  left: 50%;
+  transform: translateX(-50%);
+  color: white;
+  text-decoration: none;
+  font-family: 'Montserrat', Arial, Helvetica, sans-serif;
+  font-size: 14px;
+  font-weight: 500;
+  letter-spacing: 2px;
+  z-index: 100;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.3s ease, color 0.3s ease;
+}
+
+.track-trace-link.visible {
+  opacity: 1;
+  pointer-events: auto;
+}
+
+.track-trace-link:hover {
+  color: #ccc;
+  text-decoration: underline;
+}
+
 .hamburger-menu .bar {
   width: 40px;
   height: 4px;
@@ -373,6 +401,12 @@ svg.connector-svg circle {
     height: 5px;
   }
   
+  /* Track & Trace link */
+  .track-trace-link {
+    top: calc(50% + 70px);
+    font-size: 12px;
+  }
+  
   /* Scroll indicator */
   .scroll-indicator {
     bottom: 30px;
@@ -418,6 +452,13 @@ svg.connector-svg circle {
     width: 65px;
     height: 6px;
     border-radius: 3px;
+  }
+  
+  /* Track & Trace link */
+  .track-trace-link {
+    top: calc(50% + 90px);
+    font-size: 11px;
+    letter-spacing: 1px;
   }
 }
 </style>
@@ -480,6 +521,9 @@ svg.connector-svg circle {
   <div class="bar"></div>
   <div class="bar"></div>
 </div>
+
+<!-- Track & Trace link below hamburger -->
+<a href="https://lugatani.pt/en" class="track-trace-link" id="track-trace">Track & Trace</a>
 
 <!-- Scroll indicator that appears when idle -->
 <div class="scroll-indicator" id="scroll-indicator">
@@ -601,6 +645,12 @@ document.body.style.overflow = 'hidden';
 var hamburgerInit = document.getElementById('hamburger');
 if (hamburgerInit) {
   hamburgerInit.classList.remove('visible');
+}
+
+// Hide track trace link initially
+var trackTraceInit = document.getElementById('track-trace');
+if (trackTraceInit) {
+  trackTraceInit.classList.remove('visible');
 }
 
 // Reset panel background
@@ -1204,16 +1254,19 @@ ScrollTrigger.create({
       // Hamburger only appears when gradient is 100% complete
       var hamburger = document.getElementById('hamburger');
       var hamburgerBars = document.querySelectorAll('.hamburger-menu .bar');
+      var trackTrace = document.getElementById('track-trace');
       
       if (greenHeight >= 100) {
-        // Gradient complete - show hamburger (black)
+        // Gradient complete - show hamburger (black) and track trace link
         hamburger.classList.add('visible');
+        trackTrace.classList.add('visible');
         hamburgerBars.forEach(function(bar) {
           bar.style.background = '#111';
         });
       } else {
-        // Gradient not complete - hide hamburger
+        // Gradient not complete - hide hamburger and track trace link
         hamburger.classList.remove('visible');
+        trackTrace.classList.remove('visible');
       }
     }
   },
@@ -1223,6 +1276,8 @@ ScrollTrigger.create({
     verticalLine.style.opacity = 0;
     var hamburger = document.getElementById('hamburger');
     hamburger.classList.add('visible');
+    var trackTrace = document.getElementById('track-trace');
+    trackTrace.classList.add('visible');
     var hamburgerBars = document.querySelectorAll('.hamburger-menu .bar');
     hamburgerBars.forEach(function(bar) {
       bar.style.background = '#111';
@@ -1236,9 +1291,11 @@ ScrollTrigger.create({
     cachedDotPositions = [];
     panel.style.background = '#111';
     
-    // Hide hamburger
+    // Hide hamburger and track trace link
     var hamburger = document.getElementById('hamburger');
     hamburger.classList.remove('visible');
+    var trackTrace = document.getElementById('track-trace');
+    trackTrace.classList.remove('visible');
     
     // Reset hamburger bars color
     var hamburgerBars = document.querySelectorAll('.hamburger-menu .bar');
@@ -1357,6 +1414,9 @@ window.addEventListener('pageshow', function(event) {
     // Normal page load on mobile - ensure reset
     var hamburger = document.getElementById('hamburger');
     if (hamburger) hamburger.classList.remove('visible');
+    
+    var trackTrace = document.getElementById('track-trace');
+    if (trackTrace) trackTrace.classList.remove('visible');
     
     var panel = document.getElementById('main-panel');
     if (panel) panel.style.background = '#111';
