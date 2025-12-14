@@ -5,11 +5,19 @@
 <title>LUGATANI - Connector Animation</title>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/ScrollTrigger.min.js"></script>
+
 <style>
 * { margin: 0; padding: 0; box-sizing: border-box; }
+@font-face {
+  font-family: 'Montserrat';
+  src: url('Montserrat/Montserrat-Italic-VariableFont_wght.ttf') format('truetype');
+  font-style: italic;
+  font-weight: 100 900;
+}
+
 html, body {
   background: #111;
-  font-family: Montserrat, sans-serif;
+  font-family: 'Montserrat';
   overflow-x: hidden;
   scrollbar-width: none;
 }
@@ -32,10 +40,16 @@ html::-webkit-scrollbar, body::-webkit-scrollbar { display: none; }
   visibility: hidden;
   pointer-events: none;
 }
+.loader-content {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  height: 200px; /* Fixed height to prevent shifting */
+}
 .loader-percent {
   font-size: clamp(24px, 5vw, 48px);
   font-weight: 600;
-  color: white;
+  color: black;
   margin-bottom: 10px;
 }
 .loader-line {
@@ -45,7 +59,7 @@ html::-webkit-scrollbar, body::-webkit-scrollbar { display: none; }
   transition: height 0.1s linear;
 }
 .loader-arrow {
-  margin-top: 20px;
+  margin-top: 8px;
   opacity: 0;
   transform: translateY(-10px);
   transition: opacity 0.4s ease, transform 0.4s ease;
@@ -56,13 +70,13 @@ html::-webkit-scrollbar, body::-webkit-scrollbar { display: none; }
   transform: translateY(0);
 }
 .loader-arrow img {
-  width: 24px;
+  width: 40px;
   height: auto;
-  filter: brightness(0) invert(1);
+  filter: brightness(0);
   transition: filter 0.3s ease;
 }
 .loader-arrow:hover img {
-  filter: brightness(0);
+  filter: brightness(0) invert(1);
 }
 
 .panel {
@@ -71,9 +85,17 @@ html::-webkit-scrollbar, body::-webkit-scrollbar { display: none; }
   align-items: center;
   justify-content: center;
   background: #111;
+  position: relative;
+  overflow: hidden;
 }
 
-.txt { text-align: left; line-height: 0.95; overflow: hidden; padding: 40px 60px; }
+.txt { 
+  text-align: left; 
+  line-height: 0.95; 
+  overflow: visible; 
+  padding: 40px 80px;
+  margin-left: 5%;
+}
 
 .line {
   font-size: clamp(36px, 9vw, 110px);
@@ -105,9 +127,10 @@ html::-webkit-scrollbar, body::-webkit-scrollbar { display: none; }
 svg.connector-svg {
   position: fixed;
   top: 0; left: 0;
-  width: 100%; height: 100%;
+  width: 200vw; height: 100%;
   pointer-events: none;
   z-index: 50;
+  overflow: visible;
 }
 
 svg.connector-svg path {
@@ -115,6 +138,24 @@ svg.connector-svg path {
   stroke-width: 2px;
   stroke-linecap: round;
   fill: none;
+  transition: filter 0.3s ease;
+}
+
+svg.connector-svg path.glowing {
+  filter: drop-shadow(0 0 4px rgba(255, 255, 255, 0.6)) 
+          drop-shadow(0 0 8px rgba(0, 152, 68, 0.8))
+          drop-shadow(0 0 12px rgba(0, 152, 68, 0.5));
+}
+
+svg.connector-svg path.intermittent {
+  stroke-dasharray: 20 10;
+}
+
+svg.connector-svg line#vertical-line {
+  /* Morse code pattern: dot dash dot dot dash dash dot dash */
+  stroke-dasharray: 8 6 25 6 8 6 8 6 25 6 25 6 8 6 25 6;
+  stroke-linecap: round;
+  transition: opacity 0.5s ease;
 }
 
 svg.connector-svg circle {
@@ -127,54 +168,104 @@ svg.connector-svg circle {
   display: flex;
   align-items: center;
   justify-content: center;
-  background: #1a1a1a;
+  background: #009844;
 }
-.next-section h2 { color: #009844; font-size: 3rem; }
+
+.hamburger-menu {
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  cursor: pointer;
+  padding: 20px;
+  z-index: 100;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.3s ease;
+}
+
+.hamburger-menu.visible {
+  opacity: 1;
+  pointer-events: auto;
+}
+
+.hamburger-menu .bar {
+  width: 40px;
+  height: 4px;
+  background: white;
+  border-radius: 2px;
+  transition: all 0.3s ease;
+}
+
+.hamburger-menu:hover .bar {
+  background: #111;
+}
 </style>
 </head>
 <body>
 
 <div class="loader-overlay" id="loader">
-  <div class="loader-percent" id="loader-percent">0%</div>
-  <div class="loader-line" id="loader-line"></div>
-  <div class="loader-arrow" id="loader-arrow">
-    <img src="arrow.png" alt="arrow" id="arrow-img">
+  <div class="loader-content">
+    <div class="loader-percent" id="loader-percent">0%</div>
+    <div class="loader-line" id="loader-line"></div>
+    <div class="loader-arrow" id="loader-arrow">
+      <img src="arrow.png?v=2" alt="arrow" id="arrow-img">
+    </div>
   </div>
 </div>
 
 <svg class="connector-svg" id="connector-svg">
+  <defs>
+    <linearGradient id="lineGradient" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" style="stop-color: white; stop-opacity: 1" />
+      <stop offset="40%" style="stop-color: white; stop-opacity: 1" />
+      <stop offset="100%" style="stop-color: #009844; stop-opacity: 1" />
+    </linearGradient>
+  </defs>
   <path id="connector-path"></path>
-  <path id="exit-line"></path>
+  <line id="vertical-line" stroke="white" stroke-width="2" opacity="0"></line>
   <circle id="dot-1" r="5" opacity="0"></circle>
   <circle id="dot-2" r="5" opacity="0"></circle>
   <circle id="dot-3" r="5" opacity="0"></circle>
   <circle id="dot-4" r="5" opacity="0"></circle>
   <circle id="dot-5" r="5" opacity="0"></circle>
   <circle id="dot-6" r="5" opacity="0"></circle>
+  <circle id="dot-7" r="5" opacity="0"></circle>
 </svg>
 
 <section class="panel" id="main-panel">
   <div class="txt">
     <div class="line">
-      <span class="word from-left">LO<span class="connection-point" id="letter-1">R</span>EM</span>
-      <span class="word from-right">IPSUM</span>
+      <span class="word from-left stays">LO<span class="connection-point" id="letter-1">R</span>EM</span>
+      <span class="word from-right vanishes">IPSUM</span>
     </div>
     <div class="line">
-      <span class="word from-left">DOLOR</span>
-      <span class="word from-right">AMET</span>
+      <span class="word from-left vanishes">DOLOR</span>
+      <span class="word from-right stays"><span class="connection-point" id="letter-2">S</span><span class="connection-point" id="letter-3">I</span>T</span>
+      <span class="word from-left vanishes">AMET</span>
     </div>
     <div class="line">
-      <span class="word from-right">CONSEC<span class="connection-point" id="letter-4">T</span>ET<span class="connection-point" id="letter-5">U</span>R</span>
+      <span class="word from-right stays">CONSEC<span class="connection-point" id="letter-4">T</span>ET<span class="connection-point" id="letter-5">U</span>R</span>
     </div>
     <div class="line">
-      <span class="word from-left">ADIPI<span class="connection-point" id="letter-6">S</span>CING</span>
-      <span class="word from-right">ELIT</span>
+      <span class="word from-left stays">ADIPI<span class="connection-point" id="letter-6">S</span>CING</span>
+      <span class="word from-right vanishes">ELIT</span>
     </div>
   </div>
 </section>
 
-<section class="next-section">
-  <h2>Continue scrolling...</h2>
+<!-- Fixed hamburger menu that appears during gradient animation -->
+<div class="hamburger-menu" id="hamburger">
+  <div class="bar"></div>
+  <div class="bar"></div>
+  <div class="bar"></div>
+</div>
+
+<section class="next-section" id="menu-section">
 </section>
 
 <script>
@@ -186,20 +277,94 @@ var loaderLine = document.getElementById('loader-line');
 var loaderArrow = document.getElementById('loader-arrow');
 var percent = 0;
 var maxLineHeight = 100;
+var resourcesLoaded = false;
+var animationComplete = false;
+
+// Track loading progress
+var totalResources = 0;
+var loadedResources = 0;
+
+function updateLoaderDisplay(targetPercent) {
+  loaderPercent.textContent = Math.floor(targetPercent) + '%';
+  loaderLine.style.height = (targetPercent / 100) * maxLineHeight + 'px';
+}
+
+function checkAllReady() {
+  if (resourcesLoaded && percent >= 100) {
+    animationComplete = true;
+    loaderArrow.classList.add('visible');
+  }
+}
 
 function animateLoader() {
+  // Animate to target percent based on loaded resources
+  var targetPercent = resourcesLoaded ? 100 : Math.min(90, (loadedResources / Math.max(1, totalResources)) * 90);
+  
   var interval = setInterval(function() {
-    percent += 1;
-    loaderPercent.textContent = percent + '%';
-    loaderLine.style.height = (percent / 100) * maxLineHeight + 'px';
-    if (percent >= 100) {
+    // Recalculate target in case more resources loaded
+    targetPercent = resourcesLoaded ? 100 : Math.min(90, (loadedResources / Math.max(1, totalResources)) * 90);
+    
+    if (percent < targetPercent) {
+      percent += 1;
+      updateLoaderDisplay(percent);
+    }
+    
+    if (percent >= 100 && resourcesLoaded) {
       clearInterval(interval);
-      loaderArrow.classList.add('visible');
+      checkAllReady();
     }
   }, 25);
 }
 
+// Count and track all resources
+function trackResources() {
+  // Track images
+  var images = document.querySelectorAll('img');
+  totalResources += images.length;
+  
+  images.forEach(function(img) {
+    if (img.complete) {
+      loadedResources++;
+    } else {
+      img.addEventListener('load', function() {
+        loadedResources++;
+      });
+      img.addEventListener('error', function() {
+        loadedResources++; // Count errors too to not block forever
+      });
+    }
+  });
+  
+  // Track fonts
+  if (document.fonts) {
+    document.fonts.ready.then(function() {
+      // Fonts loaded
+    });
+  }
+}
+
+// Wait for everything to be ready
+function waitForPageReady() {
+  trackResources();
+  
+  // Use window.onload to ensure all resources are loaded
+  if (document.readyState === 'complete') {
+    // Page already loaded
+    setTimeout(function() {
+      resourcesLoaded = true;
+    }, 500); // Small delay to ensure fonts are rendered
+  } else {
+    window.addEventListener('load', function() {
+      // All resources loaded
+      setTimeout(function() {
+        resourcesLoaded = true;
+      }, 500); // Small delay to ensure fonts are rendered
+    });
+  }
+}
+
 loaderArrow.addEventListener('click', function() {
+  if (!animationComplete) return; // Don't allow click until ready
   loader.classList.add('hidden');
   document.body.style.overflow = '';
   // Start automatic word reveal animation after loader closes
@@ -207,16 +372,23 @@ loaderArrow.addEventListener('click', function() {
 });
 
 document.body.style.overflow = 'hidden';
+waitForPageReady();
 animateLoader();
 
 var panel = document.getElementById('main-panel');
 var connPath = document.getElementById('connector-path');
-var exitLine = document.getElementById('exit-line');
 var letterIds = ['letter-1', 'letter-2', 'letter-3', 'letter-4', 'letter-5', 'letter-6'];
 var dots = [];
-for (var i = 0; i < letterIds.length; i++) {
+for (var i = 0; i < 7; i++) {
   dots.push(document.getElementById('dot-' + (i + 1)));
 }
+
+// Cache for fixed path when text starts sliding
+var cachedPath = null;
+var cachedDotPositions = [];
+var cachedExitLineLength = 0;
+var cachedVerticalLineX = null;
+var cachedVerticalLineStartY = null;
 
 // Get all words for animation
 var wordsFromLeft = document.querySelectorAll('.word.from-left');
@@ -234,7 +406,6 @@ function resetState() {
     word.style.transform = 'translateX(100vw)';
   });
   connPath.style.opacity = 0;
-  exitLine.style.opacity = 0;
   dots.forEach(function(dot) {
     if (dot) dot.style.opacity = 0;
   });
@@ -286,22 +457,36 @@ function getLetterCenter(id) {
   return { x: rect.left + rect.width / 2, y: rect.top + rect.height / 2 };
 }
 
-function buildPath() {
+function buildPath(exitLineLength) {
   var points = [];
   for (var i = 0; i < letterIds.length; i++) {
     var p = getLetterCenter(letterIds[i]);
     if (p) points.push(p);
   }
   if (points.length < 2) return '';
+  
   var d = 'M ' + points[0].x + ' ' + points[0].y;
   for (var j = 1; j < points.length; j++) {
     var prev = points[j - 1], curr = points[j];
-    d += ' Q ' + ((prev.x + curr.x) / 2) + ' ' + ((prev.y + curr.y) / 2) + ', ' + curr.x + ' ' + curr.y;
+    // Use cubic bezier for more control - keep curves tighter
+    var cpX1 = prev.x + (curr.x - prev.x) * 0.3;
+    var cpY1 = prev.y + (curr.y - prev.y) * 0.1;
+    var cpX2 = prev.x + (curr.x - prev.x) * 0.7;
+    var cpY2 = curr.y - (curr.y - prev.y) * 0.1;
+    d += ' C ' + cpX1 + ' ' + cpY1 + ', ' + cpX2 + ' ' + cpY2 + ', ' + curr.x + ' ' + curr.y;
   }
+  
+  // Add straight line down from last letter (S) - length based on scroll
+  if (exitLineLength > 0 && points.length > 0) {
+    var lastPoint = points[points.length - 1];
+    var exitY = lastPoint.y + exitLineLength;
+    d += ' L ' + lastPoint.x + ' ' + exitY;
+  }
+  
   return d;
 }
 
-function updateConnector(progress) {
+function updateConnector(progress, exitLineLength) {
   var points = [];
   for (var i = 0; i < letterIds.length; i++) {
     var p = getLetterCenter(letterIds[i]);
@@ -309,13 +494,28 @@ function updateConnector(progress) {
   }
   if (points.length < 2) return;
   
-  connPath.setAttribute('d', buildPath());
+  // Add exit point (straight down from S)
+  if (exitLineLength > 0 && points.length > 0) {
+    var lastPoint = points[points.length - 1];
+    var exitY = lastPoint.y + exitLineLength;
+    points.push({ x: lastPoint.x, y: exitY });
+  }
+  
+  connPath.setAttribute('d', buildPath(exitLineLength));
   var len = connPath.getTotalLength();
   if (len > 0) {
     connPath.style.strokeDasharray = len;
     connPath.style.strokeDashoffset = len * (1 - progress);
-    connPath.style.opacity = progress > 0.01 ? 1 : 0;
+    // Keep line visible once it starts drawing, and always visible at 100%
+    if (progress >= 1) {
+      connPath.style.opacity = 1;
+    } else {
+      connPath.style.opacity = progress > 0.01 ? 1 : 0;
+    }
   }
+  
+  // Get all words that don't have connection points (will vanish)
+  var allWords = document.querySelectorAll('.word');
   
   for (var idx = 0; idx < points.length; idx++) {
     var pt = points[idx];
@@ -324,64 +524,502 @@ function updateConnector(progress) {
       dots[idx].setAttribute('cy', pt.y);
       dots[idx].style.opacity = progress >= (idx + 1) / points.length ? 0.9 : 0;
     }
-    var letter = document.getElementById(letterIds[idx]);
-    if (letter) {
-      if (progress >= (idx + 1) / points.length) {
-        letter.classList.add('passed');
-      } else {
-        letter.classList.remove('passed');
+    // Only try to update letter classes for the first 6 points (letters)
+    if (idx < letterIds.length) {
+      var letter = document.getElementById(letterIds[idx]);
+      if (letter) {
+        if (progress >= (idx + 1) / points.length) {
+          letter.classList.add('passed');
+        } else {
+          letter.classList.remove('passed');
+        }
       }
+    }
+  }
+  
+  // Make words with 'vanishes' class turn black as we scroll
+  allWords.forEach(function(word) {
+    if (word.classList.contains('vanishes')) {
+      // Words that should vanish turn black instead
+      var fadeStart = 0.3; // Start darkening at 30% progress
+      var fadeEnd = 0.7; // Fully black at 70% progress
+      if (progress < fadeStart) {
+        word.style.color = '#009844'; // Original green
+      } else if (progress > fadeEnd) {
+        word.style.color = '#111'; // Black (matches background)
+      } else {
+        var fadeProgress = (progress - fadeStart) / (fadeEnd - fadeStart);
+        // Interpolate from green (#009844) to black (#111)
+        var r = Math.round(0 * (1 - fadeProgress) + 17 * fadeProgress);
+        var g = Math.round(152 * (1 - fadeProgress) + 17 * fadeProgress);
+        var b = Math.round(68 * (1 - fadeProgress) + 17 * fadeProgress);
+        word.style.color = 'rgb(' + r + ',' + g + ',' + b + ')';
+      }
+    }
+  });
+}
+
+// Rain droplets
+var rainDroplets = [];
+var numDroplets = 20;
+var rainStarted = false;
+
+function createRainDroplets() {
+  var svg = document.getElementById('connector-svg');
+  var panelRect = panel.getBoundingClientRect();
+  
+  for (var i = 0; i < numDroplets; i++) {
+    var line = document.createElementNS('http://www.w3.org/2000/svg', 'line');
+    var x = Math.random() * panelRect.width + panelRect.left;
+    var startY = Math.random() * -200 - 50; // Start above the panel
+    var dropLength = 30 + Math.random() * 50; // Random length
+    
+    line.setAttribute('x1', x);
+    line.setAttribute('y1', startY);
+    line.setAttribute('x2', x);
+    line.setAttribute('y2', startY + dropLength);
+    line.setAttribute('stroke', '#000');
+    line.setAttribute('stroke-width', '2');
+    line.setAttribute('class', 'rain-droplet');
+    line.style.opacity = 0;
+    
+    svg.appendChild(line);
+    rainDroplets.push({
+      element: line,
+      startX: x,
+      startY: startY,
+      length: dropLength,
+      speed: 0.5 + Math.random() * 0.5, // Random speed multiplier
+      delay: Math.random() * 0.5 // Random delay
+    });
+  }
+}
+
+function animateRainDroplets(progress) {
+  // progress goes from 0 to 1 for rain animation phase
+  var panelRect = panel.getBoundingClientRect();
+  var endY = panelRect.height + 100;
+  
+  for (var i = 0; i < rainDroplets.length; i++) {
+    var drop = rainDroplets[i];
+    var dropProgress = Math.max(0, Math.min(1, (progress - drop.delay) / (1 - drop.delay)));
+    dropProgress = dropProgress * drop.speed;
+    dropProgress = Math.min(1, dropProgress);
+    
+    var currentY = drop.startY + (endY - drop.startY) * dropProgress;
+    
+    drop.element.setAttribute('y1', currentY);
+    drop.element.setAttribute('y2', currentY + drop.length);
+    drop.element.style.opacity = dropProgress > 0 && dropProgress < 0.95 ? 0.7 : 0;
+  }
+}
+
+function slideTextOut(slideProgress) {
+  // slideProgress goes from 0 to 1, controlling how far the text slides
+  var allWords = document.querySelectorAll('.word');
+  var maxSlide = window.innerWidth + 200; // slide off screen
+  
+  allWords.forEach(function(word) {
+    word.style.transform = 'translateX(' + (slideProgress * maxSlide) + 'px)';
+  });
+  
+  // Keep the cached path and dot positions fixed - don't update them
+  // Just fade out the connector path and dots as text slides
+  connPath.style.opacity = Math.max(0, 1 - slideProgress * 2);
+  for (var i = 0; i < dots.length; i++) {
+    if (dots[i]) {
+      dots[i].style.opacity = Math.max(0, 0.9 - slideProgress * 2);
     }
   }
 }
 
-function drawExitLine(progress) {
-  // Get last letter position
-  var lastLetter = document.getElementById(letterIds[letterIds.length - 1]);
-  if (!lastLetter) return;
+// Save the current path and dot positions before text starts moving
+function cachePathPositions() {
+  if (cachedPath) return; // Already cached
   
-  var rect = lastLetter.getBoundingClientRect();
-  var startX = rect.left + rect.width / 2;
-  var startY = rect.top + rect.height / 2;
-  var endY = window.innerHeight; // Go to bottom of viewport
+  var points = [];
+  for (var i = 0; i < letterIds.length; i++) {
+    var p = getLetterCenter(letterIds[i]);
+    if (p) points.push({ x: p.x, y: p.y });
+  }
   
-  var currentY = startY + (endY - startY) * progress;
+  // Add exit point using the cached exit line length
+  if (points.length > 0 && cachedExitLineLength > 0) {
+    var lastPoint = points[points.length - 1];
+    var exitY = lastPoint.y + cachedExitLineLength;
+    points.push({ x: lastPoint.x, y: exitY });
+  }
   
-  exitLine.setAttribute('d', 'M ' + startX + ' ' + startY + ' L ' + startX + ' ' + currentY);
-  exitLine.style.opacity = 1;
+  cachedDotPositions = points;
+  cachedPath = buildPath(cachedExitLineLength);
+}
+
+// Use cached path and positions (for when text is sliding)
+function useCachedPath() {
+  if (!cachedPath) return;
+  
+  connPath.setAttribute('d', cachedPath);
+  
+  // Set dots to cached positions
+  for (var idx = 0; idx < cachedDotPositions.length; idx++) {
+    var pt = cachedDotPositions[idx];
+    if (dots[idx]) {
+      dots[idx].setAttribute('cx', pt.x);
+      dots[idx].setAttribute('cy', pt.y);
+    }
+  }
 }
 
 ScrollTrigger.create({
   trigger: panel,
   start: 'top top',
-  end: '+=400%',
+  end: '+=350%',
   pin: true,
   pinSpacing: true,
   onUpdate: function(self) {
     var progress = self.progress;
+    var svg = document.getElementById('connector-svg');
+    var verticalLine = document.getElementById('vertical-line');
     
     // Only animate if text animation is complete
     if (!textAnimationComplete) {
       connPath.style.opacity = 0;
-      exitLine.style.opacity = 0;
+      verticalLine.style.opacity = 0;
       return;
     }
     
-    // 0% to 80%: connector line animation
-    if (progress <= 0.8) {
-      var connectorProgress = progress / 0.8;
-      updateConnector(connectorProgress);
-      exitLine.style.opacity = 0;
-    }
-    // 80% to 100%: exit line going down
-    else {
-      // Ensure connector is complete
-      updateConnector(1);
+    // Phase 1: Connector line through letters (0% to 20%)
+    // Phase 2: Words slide right, connector follows, vertical line starts (20% to 45%)
+    // Phase 3: Everything slides off, vertical line extends down (45% to 70%)
+    // Phase 4: Only vertical line remains, continues down (70% to 100%)
+    
+    var letterPhaseEnd = 0.20;
+    var slidePhaseEnd = 0.45;
+    var fadeOutPhaseEnd = 0.70;
+    
+    // Get the last letter position for vertical line start point
+    var lastLetterPos = getLetterCenter('letter-6');
+    var verticalLineX = lastLetterPos ? lastLetterPos.x : window.innerWidth / 2;
+    var verticalLineStartY = lastLetterPos ? lastLetterPos.y : window.innerHeight / 2;
+    
+    // Get hamburger bars for color transitions
+    var hamburgerBars = document.querySelectorAll('.hamburger-menu .bar');
+    
+    if (progress <= letterPhaseEnd) {
+      // Phase 1: Draw connector line through letters only
+      var connectorProgress = progress / letterPhaseEnd;
+      updateConnector(connectorProgress, 0);
       
-      // Exit line animation
-      var exitProgress = (progress - 0.8) / 0.2;
-      drawExitLine(exitProgress);
+      // Reset everything - full cleanup for scroll-back-up
+      cachedPath = null;
+      cachedDotPositions = [];
+      connPath.classList.remove('glowing', 'intermittent');
+      verticalLine.style.opacity = 0;
+      verticalLine.style.filter = 'none';
+      
+      // Keep background dark
+      panel.style.background = '#111';
+      
+      // Reset ALL words - position and opacity
+      var allWords = document.querySelectorAll('.word');
+      allWords.forEach(function(word) {
+        word.style.transform = 'translateX(0)';
+        word.style.opacity = '1';
+        word.style.visibility = 'visible';
+      });
+      
+      // Staying words stay green
+      var stayingWords = document.querySelectorAll('.word.stays');
+      stayingWords.forEach(function(word) {
+        word.style.color = '#009844';
+        word.style.opacity = '1';
+      });
+      
+      // Vanishing words turn dark as the connector line progresses
+      // Line goes through: letter-1 (LOREM row) -> letter-2,3 (SIT row) -> letter-4,5 (CONSECTETUR) -> letter-6 (ADIPISCING)
+      // IPSUM should darken after line reaches letter-2 (around 17% of connector progress)
+      // DOLOR and AMET should darken after line reaches letter-2,3 (around 33%)
+      // ELIT should darken after line reaches letter-6 (around 100%)
+      
+      var vanishingWords = document.querySelectorAll('.word.vanishes');
+      vanishingWords.forEach(function(word) {
+        var wordText = word.textContent;
+        var darkProgress = 0;
+        
+        if (wordText === 'IPSUM') {
+          // Darkens after line passes letter-1 to letter-2 (17% to 33%)
+          if (connectorProgress > 0.17) {
+            darkProgress = Math.min(1, (connectorProgress - 0.17) / 0.16);
+          }
+        } else if (wordText === 'DOLOR' || wordText === 'AMET') {
+          // Darkens after line passes letter-2,3 (33% to 50%)
+          if (connectorProgress > 0.33) {
+            darkProgress = Math.min(1, (connectorProgress - 0.33) / 0.17);
+          }
+        } else if (wordText === 'ELIT') {
+          // Darkens after line passes letter-5 to letter-6 (83% to 100%)
+          if (connectorProgress > 0.83) {
+            darkProgress = Math.min(1, (connectorProgress - 0.83) / 0.17);
+          }
+        }
+        
+        // Interpolate from green (#009844) to dark (#111)
+        var r = Math.round(0 * (1 - darkProgress) + 17 * darkProgress);
+        var g = Math.round(152 * (1 - darkProgress) + 17 * darkProgress);
+        var b = Math.round(68 * (1 - darkProgress) + 17 * darkProgress);
+        word.style.color = 'rgb(' + r + ',' + g + ',' + b + ')';
+      });
+      
+      // Hide dots for vertical line
+      if (dots[6]) dots[6].style.opacity = 0;
+      
+      // Hide hamburger and reset its color
+      var hamburger = document.getElementById('hamburger');
+      hamburger.classList.remove('visible');
+      hamburgerBars.forEach(function(bar) {
+        bar.style.background = 'white';
+      });
+      
+      // Reset vertical line dash pattern
+      verticalLine.style.strokeDasharray = 'none';
+      verticalLine.style.strokeDashoffset = '0';
+      
+      // Reset cached positions
+      cachedVerticalLineX = null;
+      cachedVerticalLineStartY = null;
+      
+    } else if (progress <= slidePhaseEnd) {
+      // Phase 2: Words + connector slide right, vertical line appears
+      var slideProgress = (progress - letterPhaseEnd) / (slidePhaseEnd - letterPhaseEnd);
+      
+      // Cache the vertical line start position before sliding
+      if (!cachedVerticalLineX) {
+        cachedVerticalLineX = verticalLineX;
+        cachedVerticalLineStartY = verticalLineStartY;
+      }
+      
+      // Slide words to the right (connector follows automatically since it's attached to letters)
+      var slideAmount = slideProgress * (window.innerWidth * 0.5);
+      var allWords = document.querySelectorAll('.word');
+      allWords.forEach(function(word) {
+        word.style.transform = 'translateX(' + slideAmount + 'px)';
+      });
+      
+      // Vanishing words are already dark from Phase 1 - keep them dark
+      var vanishingWords = document.querySelectorAll('.word.vanishes');
+      vanishingWords.forEach(function(word) {
+        word.style.color = '#111';
+      });
+      
+      // Update connector to follow the moving letters
+      updateConnector(1, 0);
+      connPath.classList.add('glowing');
+      
+      // Draw vertical line from cached position going down - starts as SOLID line
+      var verticalLineLength = slideProgress * window.innerHeight * 0.5;
+      verticalLine.setAttribute('x1', cachedVerticalLineX);
+      verticalLine.setAttribute('y1', cachedVerticalLineStartY);
+      verticalLine.setAttribute('x2', cachedVerticalLineX);
+      verticalLine.setAttribute('y2', cachedVerticalLineStartY + verticalLineLength);
+      verticalLine.style.opacity = slideProgress > 0.1 ? 1 : 0;
+      
+      // Line starts solid, no dash pattern yet
+      verticalLine.style.strokeDasharray = 'none';
+      verticalLine.style.strokeDashoffset = 0;
+      
+      // Keep background dark in this phase - no gradient yet
+      panel.style.background = '#111';
+      
+    } else if (progress <= fadeOutPhaseEnd) {
+      // Phase 3: Line extends DOWN, then also UP from top after a bit
+      var fadeProgress = (progress - slidePhaseEnd) / (fadeOutPhaseEnd - slidePhaseEnd);
+      
+      // Continue sliding words off screen
+      var slideAmount = (window.innerWidth * 0.5) + fadeProgress * (window.innerWidth * 0.8);
+      var allWords = document.querySelectorAll('.word');
+      allWords.forEach(function(word) {
+        word.style.transform = 'translateX(' + slideAmount + 'px)';
+      });
+      
+      // Fade out the connector path
+      connPath.style.opacity = Math.max(0, 1 - fadeProgress * 2);
+      
+      // Hide all dots
+      dots.forEach(function(dot) {
+        if (dot) dot.style.opacity = Math.max(0, 0.9 - fadeProgress * 2);
+      });
+      
+      // Line extends DOWN from start point
+      var verticalLineLength = (window.innerHeight * 0.5) + fadeProgress * (window.innerHeight * 1.5);
+      var lineBottomY = cachedVerticalLineStartY + verticalLineLength;
+      
+      // After 50% progress, line ALSO extends UP from top of screen
+      var lineTopY = cachedVerticalLineStartY;
+      if (fadeProgress > 0.5) {
+        var upProgress = (fadeProgress - 0.5) / 0.5; // 0 to 1 over second half
+        // Line top moves up toward top of screen
+        lineTopY = cachedVerticalLineStartY - (upProgress * (cachedVerticalLineStartY + 50));
+      }
+      
+      verticalLine.setAttribute('x1', cachedVerticalLineX);
+      verticalLine.setAttribute('y1', lineTopY);
+      verticalLine.setAttribute('x2', cachedVerticalLineX);
+      verticalLine.setAttribute('y2', lineBottomY);
+      
+      // Line starts solid, becomes morse code in second half
+      if (fadeProgress < 0.5) {
+        // Solid while extending down
+        verticalLine.style.strokeDasharray = 'none';
+        verticalLine.style.strokeDashoffset = 0;
+      } else {
+        // Becomes intermittent/morse code
+        var morseProgress = (fadeProgress - 0.5) / 0.5; // 0 to 1 over second half
+        if (morseProgress < 0.4) {
+          // Transitioning to dashes
+          var dashSize = 50 - morseProgress * 100;
+          var gapSize = 5 + morseProgress * 10;
+          verticalLine.style.strokeDasharray = Math.max(10, dashSize) + ' ' + gapSize;
+        } else {
+          // Full morse code pattern
+          verticalLine.style.strokeDasharray = '8 6 25 6 8 6 8 6 25 6 25 6 8 6 25 6';
+        }
+        
+        // Animate the dash pattern
+        var dashOffset = morseProgress * 150;
+        verticalLine.style.strokeDashoffset = -dashOffset;
+      }
+      
+      verticalLine.style.opacity = 1;
+      
+      // Add glow to vertical line
+      verticalLine.style.filter = 'drop-shadow(0 0 4px rgba(255, 255, 255, 0.6)) drop-shadow(0 0 8px rgba(0, 152, 68, 0.8))';
+      
+      // Keep hamburger hidden in this phase
+      var hamburger = document.getElementById('hamburger');
+      hamburger.classList.remove('visible');
+      
+      // Keep background BLACK throughout this entire phase
+      panel.style.background = '#111';
+      
+    } else {
+      // Phase 4: Line covers top to bottom, gradient rises and covers the line from bottom
+      var finalProgress = (progress - fadeOutPhaseEnd) / (1 - fadeOutPhaseEnd);
+      
+      // Hide words completely
+      var allWords = document.querySelectorAll('.word');
+      allWords.forEach(function(word) {
+        word.style.opacity = 0;
+      });
+      
+      // Hide connector completely
+      connPath.style.opacity = 0;
+      dots.forEach(function(dot) {
+        if (dot) dot.style.opacity = 0;
+      });
+      
+      // Background radial gradient fills from bottom - from 0% to 100%
+      var greenHeight = finalProgress * 110; // Green covers from 0% to 110% (full)
+      if (greenHeight >= 100) {
+        // Full green background
+        panel.style.background = '#009844';
+      } else {
+        panel.style.background = 'radial-gradient(ellipse 200% 100% at 50% 120%, #009844 0%, #009844 ' + (greenHeight + 10) + '%, #004d25 ' + (greenHeight + 20) + '%, #111 ' + Math.min(100, greenHeight + 50) + '%)';
+      }
+      
+      // Line from TOP, but bottom rises UP as gradient covers it
+      var lineTopY = -50; // Above screen
+      // Line bottom moves UP as gradient fills - gradient covers the line from below
+      var gradientCoverY = window.innerHeight - (finalProgress * window.innerHeight);
+      var lineBottomY = Math.max(gradientCoverY, lineTopY + 50); // Line shrinks from bottom
+      
+      verticalLine.setAttribute('x1', cachedVerticalLineX);
+      verticalLine.setAttribute('y1', lineTopY);
+      verticalLine.setAttribute('x2', cachedVerticalLineX);
+      verticalLine.setAttribute('y2', lineBottomY);
+      
+      // Keep full morse code pattern
+      verticalLine.style.strokeDasharray = '8 6 25 6 8 6 8 6 25 6 25 6 8 6 25 6';
+      
+      // Animate the morse code dash pattern (scrolling effect)
+      var dashOffset = 150 + finalProgress * 250;
+      verticalLine.style.strokeDashoffset = -dashOffset;
+      
+      // Line stays visible until it's fully covered
+      var lineOpacity = finalProgress >= 1 ? 0 : 1;
+      verticalLine.style.opacity = lineOpacity;
+      
+      // Glow effect
+      verticalLine.style.filter = 'drop-shadow(0 0 4px rgba(255, 255, 255, 0.6)) drop-shadow(0 0 8px rgba(0, 152, 68, 0.8))';
+      
+      // Hamburger only appears when gradient is 100% complete
+      var hamburger = document.getElementById('hamburger');
+      var hamburgerBars = document.querySelectorAll('.hamburger-menu .bar');
+      
+      if (greenHeight >= 100) {
+        // Gradient complete - show hamburger (black)
+        hamburger.classList.add('visible');
+        hamburgerBars.forEach(function(bar) {
+          bar.style.background = '#111';
+        });
+      } else {
+        // Gradient not complete - hide hamburger
+        hamburger.classList.remove('visible');
+      }
     }
+  },
+  onLeave: function() {
+    // Cleanup when leaving - ensure hamburger is black and line is hidden
+    var verticalLine = document.getElementById('vertical-line');
+    verticalLine.style.opacity = 0;
+    var hamburger = document.getElementById('hamburger');
+    hamburger.classList.add('visible');
+    var hamburgerBars = document.querySelectorAll('.hamburger-menu .bar');
+    hamburgerBars.forEach(function(bar) {
+      bar.style.background = '#111';
+    });
+  },
+  onLeaveBack: function() {
+    // Reset everything when scrolling back up past the trigger
+    cachedVerticalLineX = null;
+    cachedVerticalLineStartY = null;
+    cachedPath = null;
+    cachedDotPositions = [];
+    panel.style.background = '#111';
+    
+    // Hide hamburger
+    var hamburger = document.getElementById('hamburger');
+    hamburger.classList.remove('visible');
+    
+    // Reset hamburger bars color
+    var hamburgerBars = document.querySelectorAll('.hamburger-menu .bar');
+    hamburgerBars.forEach(function(bar) {
+      bar.style.background = 'white';
+    });
+    
+    // Reset vertical line
+    var verticalLine = document.getElementById('vertical-line');
+    verticalLine.style.opacity = 0;
+    verticalLine.style.strokeDasharray = 'none';
+    verticalLine.style.strokeDashoffset = '0';
+    verticalLine.style.filter = 'none';
+    
+    // Reset ALL words - position, opacity, and color
+    var allWords = document.querySelectorAll('.word');
+    allWords.forEach(function(word) {
+      word.style.transform = 'translateX(0)';
+      word.style.opacity = '1';
+      word.style.color = '#009844';
+      word.style.visibility = 'visible';
+    });
+    
+    // Reset connector
+    connPath.style.opacity = 0;
+    connPath.classList.remove('glowing', 'intermittent');
+    
+    // Reset all dots
+    dots.forEach(function(dot) {
+      if (dot) dot.style.opacity = 0;
+    });
   }
 });
 

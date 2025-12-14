@@ -8,123 +8,32 @@
 <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/ScrollTrigger.min.js"></script>
 
 <link rel="stylesheet" href="testload.css">
-<style>
-#loader {
-  position: fixed;
-  z-index: 9999;
-  inset: 0;
-  background: #111;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  transition: opacity 0.8s ease;
-}
-
-#loader-content {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 40px;
-  text-align: center;
-}
-
-#loader-text {
-  font-size: 3rem;
-  font-weight: 300;
-  color: white;
-  letter-spacing: 3px;
-  min-width: 140px;
-  font-family: 'Helvetica Neue', 'Montserrat', sans-serif;
-}
-
-#loader-arrow {
-  opacity: 0;
-  cursor: pointer;
-  transition: opacity 0.6s ease, transform 0.4s ease;
-  transform: translateY(20px);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-
-#loader-arrow svg {
-  filter: drop-shadow(0 0 4px rgba(255,255,255,0.4));
-  transition: transform 0.3s ease, filter 0.3s ease;
-}
-
-#loader-arrow:hover svg {
-  transform: translateY(-8px);
-  filter: drop-shadow(0 0 8px rgba(126, 227, 183, 0.8));
-}
-
-#loader-arrow:hover svg line {
-  stroke: #7ee3b7;
-  transition: stroke 0.3s ease;
-}
-
-@media (max-width: 600px) {
-  .loader-text {
-    font-size: 2.2rem;
-  }
-  
-  .loader-arrow svg {
-    width: 60px;
-    height: 90px;
-  }
-}
-
-/* Color transition effect for parts */
-.part {
-  transition: color 0.6s ease, background 0.6s ease;
-  color: #009844;
-}
-
-.part.color-dark {
-  color: #4a4a4a;
-  background: linear-gradient(135deg, #4a4a4a 0%, #2a2a2a 100%);
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-  background-clip: text;
-}
-
-.part.color-green {
-  color: #009844;
-}
-</style>
 </head>
 <body>
 
-<!-- LOADING SCREEN -->
-<div id="loader">
-  <div id="loader-content">
-    <div id="loader-text">0%</div>
-    <div id="loader-arrow">
-      <svg width="60" height="100" viewBox="0 0 60 100" fill="none" xmlns="http://www.w3.org/2000/svg">
-        <!-- Main arrow line going down -->
-        <line x1="30" y1="10" x2="30" y2="75" stroke="white" stroke-width="1.2" stroke-linecap="round"/>
-        <!-- Left arrow point -->
-        <line x1="30" y1="75" x2="18" y2="62" stroke="white" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round"/>
-        <!-- Right arrow point -->
-        <line x1="30" y1="75" x2="42" y2="62" stroke="white" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round"/>
-      </svg>
-    </div>
+</div>
+<div class="panel" id="p1">
+  <div class="txt">
+    <div class="line"><span class="part from-left">LOREM</span><span class="part">IPSUM</span></div>
+    <div class="line"><span class="part from-left">DOLOR</span><span class="part">SIT</span><span class="part">AMET</span></div>
   </div>
 </div>
 
-
-<div class="panel" id="single-slide">
+<div class="panel" id="p2">
   <div class="txt">
-    <div class="line"><span class="part from-left">test</span></div>
-    <div class="line"><span class="part">&nbsp;&nbsp;&nbsp;&nbsp;test</span></div>
-    <div class="line"><span class="part from-left">LOREM</span><span class="part">IPSUM</span></div>
-    <div class="line"><span class="part from-left">DOLOR</span><span class="part">SIT</span><span class="part">AMET</span></div>
     <div class="line"><span class="part from-left">CONSECTETUR</span></div>
     <div class="line"><span class="part from-left">ADIPISCING</span><span class="part">ELIT</span></div>
     <div class="line"><span class="part from-left">LATIN</span><span class="part">YES</span></div>
+  </div>
+</div>
+
+<div class="panel" id="p3">
+  <div class="txt">
     <div class="line"><span class="part from-left">SLIDE</span><span class="part">THREE</span></div>
     <div class="line"><span class="part from-left">ANIMATED</span><span class="part">TEXT</span></div>
     <div class="line"><span class="part from-right">AN0THER</span><span class="part">DAY</span></div>
-  </div>
+
+</div>
 </div>
 
 <script>
@@ -141,55 +50,39 @@ function createConnectors(panel) {
 
   const svg = document.createElementNS("http://www.w3.org/2000/svg", "svg");
   svg.classList.add("connector-line");
-  svg.style.cssText = "position:absolute;top:0;left:0;width:100%;height:100%;pointer-events:none;z-index:5;overflow:visible;border:2px solid red;";
-  svg.setAttribute("preserveAspectRatio", "none");
+  svg.style.cssText = "position:absolute;top:0;left:0;width:100%;height:100%;pointer-events:none;z-index:5;";
   panel.style.position = "relative";
   panel.insertBefore(svg, panel.firstChild);
 
   const path = document.createElementNS("http://www.w3.org/2000/svg", "path");
   path.setAttribute("fill", "none");
   path.setAttribute("stroke", "white");
-  path.setAttribute("stroke-width", "1");
+  path.setAttribute("stroke-width", "3");
   path.style.opacity = "0";
   svg.appendChild(path);
 
-  // Create dots for each connection point
-  const dots = parts.map((part, idx) => {
-    const dot = document.createElementNS("http://www.w3.org/2000/svg", "circle");
-    dot.setAttribute("r", "4");
-    dot.setAttribute("fill", "white");
-    dot.style.opacity = "0";
-    dot.style.filter = "drop-shadow(0 0 6px rgba(126, 227, 183, 0.8))";
-    dot.classList.add("connection-dot");
-    svg.appendChild(dot);
-    return dot;
-  });
-
-  allPaths.push({ panel, svg, path, parts, dots, animated: false });
+  allPaths.push({ panel, svg, path, parts, animated: false });
 
   requestAnimationFrame(positionAllPaths);
 
-  return { svg, path, dots };
+  return { svg, path };
 }
 
 function positionAllPaths() {
-  allPaths.forEach((entry, idx) => {
-    const { svg, path, parts, dots } = entry;
+  allPaths.forEach(entry => {
+    const { svg, path, parts } = entry;
     if (!parts || parts.length < 2) return;
 
     const svgRect = svg.getBoundingClientRect();
-    
-  // Set SVG viewBox to match panel dimensions
-  svg.setAttribute("viewBox", `0 0 ${svgRect.width} ${svgRect.height}`);
 
-  // Build a list of center points for each word
-  const wordCenters = parts.map(p => {
-    const r = p.getBoundingClientRect();
-    const x = (r.left + r.right) / 2 - svgRect.left;
-    const y = (r.top + r.bottom) / 2 - svgRect.top;
-    console.log('Word:', p.textContent, 'Center:', x, y);
-    return { x, y };
-  });
+    // Build a list of center points for each word
+    const wordCenters = parts.map(p => {
+        const r = p.getBoundingClientRect();
+        return {
+            x: (r.left + r.right) / 2 - svgRect.left,
+            y: (r.top + r.bottom) / 2 - svgRect.top
+        };
+    });
 
     // Path passes exactly through the center of each word
     const pts = wordCenters;
@@ -197,23 +90,12 @@ function positionAllPaths() {
     const d = bezierFromPoints(pts);
     path.setAttribute("d", d);
 
-    // Position dots at each connection point
-    if (dots) {
-      dots.forEach((dot, idot) => {
-        dot.setAttribute("cx", pts[idot].x);
-        dot.setAttribute("cy", pts[idot].y);
-      });
-    }
-
     const len = path.getTotalLength();
-    console.log(`Panel ${idx}: path length = ${len}, parts = ${parts.length}`);
     path.style.strokeDasharray = len;
-    path.style.opacity = 1;
-    if (dots) {
-      dots.forEach((dot, idot) => {
-        console.log('Dot', idot, 'at', pts[idot].x, pts[idot].y);
-        dot.setAttribute('opacity', '1');
-      });
+
+    if (!entry.animated) {
+      path.style.strokeDashoffset = len;
+      path.style.opacity = 0;
     }
   });
 }
@@ -242,18 +124,6 @@ function bezierFromPoints(pts, tension = 0.5) {
   return d;
 }
 
-// Helper: interpolate between two colors
-function lerpColor(a, b, t) {
-  const ah = a.replace('#', '');
-  const bh = b.replace('#', '');
-  const ar = parseInt(ah.substring(0,2), 16), ag = parseInt(ah.substring(2,4), 16), ab = parseInt(ah.substring(4,6), 16);
-  const br = parseInt(bh.substring(0,2), 16), bg = parseInt(bh.substring(2,4), 16), bb = parseInt(bh.substring(4,6), 16);
-  const rr = Math.round(ar + (br-ar)*t);
-  const rg = Math.round(ag + (bg-ag)*t);
-  const rb = Math.round(ab + (bb-ab)*t);
-  return `rgb(${rr},${rg},${rb})`;
-}
-
 // Reposition on resize
 window.addEventListener("resize", () => {
   clearTimeout(window._r);
@@ -262,193 +132,46 @@ window.addEventListener("resize", () => {
 
 ScrollTrigger.addEventListener("refresh", positionAllPaths);
 
-// Detect if mobile
-const isMobile = window.innerWidth < 768;
+// Create connectors + animate text + animate path
+document.querySelectorAll(".panel").forEach(panel => {
+  const parts = panel.querySelectorAll(".part");
+  const conn = createConnectors(panel);
 
-// Animation parameters that adapt to screen size
-const animConfig = {
-  slideDistance: isMobile ? 80 : 150,
-  duration: isMobile ? 0.6 : 1,
-  stagger: isMobile ? 0.04 : 0.07,
-  pathDuration: isMobile ? 0.6 : 1
-};
-
-
-
-// Single global connector and scroll-driven animation
-const panel = document.querySelector('.panel');
-const parts = Array.from(panel.querySelectorAll('.part'));
-const conn = createConnectors(panel);
-
-// Animate text in as you scroll (one letter/word at a time)
-gsap.fromTo(parts,
-  { opacity: 0, x: i => parts[i].classList.contains('from-left') ? -animConfig.slideDistance : animConfig.slideDistance },
-  {
-    opacity: 1,
-    x: 0,
-    duration: animConfig.duration,
-    stagger: animConfig.stagger,
-    ease: 'power3.out',
-    scrollTrigger: {
-      trigger: panel,
-      start: 'top top',
-      end: 'bottom bottom',
-      scrub: true
-    }
-  }
-);
-
-if (conn) {
-  const path = conn.path;
-  const dots = conn.dots;
-  // Animate path and dots as you scroll through the single panel
-  ScrollTrigger.create({
-    trigger: panel,
-    start: 'top top',
-    end: 'bottom bottom',
-    scrub: true,
-    onUpdate: (self) => {
-      const total = parts.length;
-      const progress = self.progress;
-      // Determine how many letters/words to connect
-      const currentIdx = Math.floor(progress * total);
-      // Build a path that connects only up to currentIdx
-      if (currentIdx < 1) {
-        path.setAttribute('d', '');
-        path.setAttribute('opacity', '0');
-        dots.forEach(dot => dot.setAttribute('opacity', '0'));
-        return;
+  gsap.fromTo(parts,
+    { opacity: 0, x: i => parts[i].classList.contains("from-left") ? -150 : 150 },
+    {
+      opacity: 1,
+      x: 0,
+      duration: 1,
+      stagger: 0.07,
+      ease: "power3.out",
+      scrollTrigger: {
+        trigger: panel,
+        start: "top center"
       }
-      // Get the current positions
-      const svgRect = conn.svg.getBoundingClientRect();
-      const pts = parts.slice(0, currentIdx + 1).map(p => {
-        const r = p.getBoundingClientRect();
-        return {
-          x: (r.left + r.right) / 2 - svgRect.left,
-          y: (r.top + r.bottom) / 2 - svgRect.top
-        };
-      });
-      // Build the path
-      const d = bezierFromPoints(pts);
-      path.setAttribute('d', d);
-      path.setAttribute('opacity', '1');
-      // Show dots only up to currentIdx
-      dots.forEach((dot, idx) => {
-        if (idx <= currentIdx) {
-          dot.setAttribute('cx', pts[idx]?.x || 0);
-          dot.setAttribute('cy', pts[idx]?.y || 0);
-          dot.setAttribute('opacity', '0.7');
-        } else {
-          dot.setAttribute('opacity', '0');
-        }
-      });
     }
-  });
-}
+  );
 
-const loader = document.getElementById("loader");
-const loaderText = document.getElementById("loader-text");
-const loaderArrow = document.getElementById("loader-arrow");
-
-let current = 0;
-let target = 0;
-
-// Update % counter
-const counter = setInterval(() => {
-  if (current < target) {
-    current++;
-    loaderText.textContent = current + "%";
+  if (conn) {
+    const path = conn.path;
+    ScrollTrigger.create({
+      trigger: panel,
+      start: "top center",
+      onEnter: () => {
+        const len = path.getTotalLength();
+        gsap.to(path, {
+          strokeDashoffset: 0,
+          opacity: 1,
+          duration: 1,
+          ease: "power3.out"
+        });
+      }
+    });
   }
-
-  // When it hits 100%, reveal arrow
-  if (current === 100) {
-    loaderArrow.style.opacity = "1";
-    loaderArrow.style.transform = "translateY(0px)";
-  }
-}, 20);
-
-// When page is fully loaded
-window.addEventListener("load", () => {
-  target = 100;
-
-  // User clicks arrow to enter
-  loaderArrow.addEventListener("click", () => {
-    loader.style.transition = "opacity 0.8s ease";
-    loader.style.opacity = "0";
-    setTimeout(() => loader.remove(), 900);
-  });
 });
 
-// Simulate loading until ready
-(function simulateProgress() {
-  const simulate = setInterval(() => {
-    if (target < 90) {
-      target += Math.random() * 5;
-      if (target > 90) target = 90;
-    }
-  }, 100);
-})();
 </script>
 
-<script>
-// one-scroll-per-section wheel/touch snap fallback
-(function(){
-  const panels = Array.from(document.querySelectorAll('.panel'));
-  if(!panels.length) return;
-
-  let isScrolling = false;
-
-  function getCurrentIndex(){
-    // choose the panel whose top is nearest to viewport top
-    let best = 0, bestDist = Infinity;
-    panels.forEach((p, i) => {
-      const rect = p.getBoundingClientRect();
-      const dist = Math.abs(rect.top);
-      if(dist < bestDist){ bestDist = dist; best = i; }
-    });
-    return best;
-  }
-
-  function scrollToIndex(i){
-    i = Math.max(0, Math.min(panels.length - 1, i));
-    if(isScrolling) return;
-    isScrolling = true;
-    panels[i].scrollIntoView({ behavior: 'smooth' });
-    // unlock after animation should be finished (tweak if needed)
-    setTimeout(() => { isScrolling = false; }, 700);
-  }
-
-  // Wheel handler
-  window.addEventListener('wheel', function(e){
-    if(isScrolling) return;
-    // ignore tiny scroll deltas
-    if(Math.abs(e.deltaY) < 10) return;
-    e.preventDefault();
-    const idx = getCurrentIndex();
-    if(e.deltaY > 0) scrollToIndex(idx + 1);
-    else scrollToIndex(idx - 1);
-  }, { passive: false });
-
-  // Touch handler (basic swipe detection)
-  let touchStartY = null;
-  window.addEventListener('touchstart', function(e){
-    touchStartY = e.touches && e.touches[0] ? e.touches[0].clientY : null;
-  }, { passive: true });
-
-  window.addEventListener('touchend', function(e){
-    if(isScrolling || touchStartY === null) return;
-    const touchEndY = e.changedTouches && e.changedTouches[0] ? e.changedTouches[0].clientY : null;
-    if(touchEndY === null) return;
-    const dy = touchStartY - touchEndY;
-    if(Math.abs(dy) < 40) return;
-    const idx = getCurrentIndex();
-    if(dy > 0) scrollToIndex(idx + 1);
-    else scrollToIndex(idx - 1);
-    touchStartY = null;
-  }, { passive: true });
-
-})();
-</script>
 
 </body>
 </html>

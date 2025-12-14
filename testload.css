@@ -9,26 +9,23 @@ body::-webkit-scrollbar {
 }
 
   body,html {
-    margin: 0;
-    padding: 0;
-    background: #111;
-    font-family: Montserrat, sans-serif;
-    height: 100%;
-    overflow-x: hidden;
-    /* smooth scrolling + scroll snap for one-panel-per-scroll */
-    scroll-behavior: smooth;
-    scroll-snap-type: y mandatory;
+    margin:0;
+    padding:0;
+    background:#111;
+    font-family:Montserrat, sans-serif;
+    height:100%;
+    overflow-x:hidden;
   }
 
   .panel {
-    height: 100vh;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    position: relative;
+    height:100vh;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    flex-direction:column;
+    position:relative;
+    overflow:hidden;
     z-index: 1;
-    /* snap each panel to the viewport start */
-    scroll-snap-align: start;
   }
 
   .txt {
@@ -39,7 +36,7 @@ body::-webkit-scrollbar {
   .line {
     font-size:clamp(40px, 12vw, 150px);
     font-weight:800;
-    color:#009844;
+    color:#00c853;
     transform:skewX(-10deg);
     white-space:nowrap;
     z-index: 10;
@@ -59,25 +56,10 @@ body::-webkit-scrollbar {
   gap:24px;
 }
 
-@media (max-width: 768px) {
-  .line {
-    gap: 12px;
-  }
-
-  .part {
-    display:inline-block;
-    opacity:0;
-    transform:translateX(80px);
-    will-change:transform, opacity;
-  }
-
-  .from-left { transform:translateX(-80px); }
-}
-
 .word {
   font-size:clamp(40px, 12vw, 150px);
   font-weight:800;
-  color:#009844;
+  color:#00c853;
   transform:skewX(-10deg);
   white-space:nowrap;
   display:inline-block;
@@ -98,7 +80,7 @@ svg.connector {
 /* The actual line */
 svg.connector line {
   stroke:white;
-  stroke-width: 1px;
+  stroke: width 0.5em;
   stroke-linecap:round;
   transform-origin:left center;
   transform:scaleX(0); /* GSAP animates this */
@@ -110,20 +92,13 @@ svg.connector line {
   position: absolute;
   top: 0;
   left: 0;
-  z-index: 5;
+  z-index: 0 !important;
   pointer-events: none;
 }
 .connector-line line {
   stroke: white;
-  stroke-width: 1px;
+  stroke-width: width 0.5em;
   stroke-linecap: round;
-}
-.connector-line path {
-  stroke: white;
-  stroke-width: 1px;
-  stroke-linecap: round;
-  stroke-linejoin: round;
-  fill: none;
 }
 
 .part, .line {
@@ -150,58 +125,9 @@ svg.connector line {
 }
 .global-connector path {
   stroke: white;
-  stroke-width: 1px;
+  stroke-width: width 0.5em;
   stroke-linecap: round;
   stroke-linejoin: round;
   fill: none;
   opacity: 0;
-}
-
-/* Flashy connection dots */
-.connection-dot {
-  filter: drop-shadow(0 0 6px rgba(126, 227, 183, 0.8)) drop-shadow(0 0 12px rgba(126, 227, 183, 0.4));
-  will-change: r, opacity;
-}
-
-.connector-line circle {
-  fill: white;
-  stroke: none;
-}
-
-#loader {
-  position: fixed;
-  z-index: 9999;
-  inset: 0;
-  background: #111;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  transition: opacity 0.6s cubic-bezier(.4,0,.2,1);
-}
-.loader-content {
-  text-align: center;
-}
-.loader-dot {
-  display: inline-block;
-  width: 14px;
-  height: 14px;
-  margin: 0 4px;
-  border-radius: 50%;
-  background: #7ee3b7;
-  animation: loader-bounce 1.2s infinite alternate;
-}
-.loader-dot:nth-child(2) { animation-delay: 0.2s; }
-.loader-dot:nth-child(3) { animation-delay: 0.4s; }
-@keyframes loader-bounce {
-  to { transform: translateY(-18px); opacity: 0.5; }
-}
-.loader-text {
-  color: #fff;
-  margin-top: 18px;
-  font-size: 1.2rem;
-  letter-spacing: 2px;
-}
-#loader.hide {
-  opacity: 0;
-  pointer-events: none;
 }
