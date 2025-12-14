@@ -119,13 +119,13 @@ html::-webkit-scrollbar, body::-webkit-scrollbar { display: none; }
 }
 
 .txt { 
-  text-align: center; 
+  text-align: left; 
   line-height: 0.95; 
   overflow: visible; 
-  padding: 20px;
-  margin: 0 auto;
+  padding: 20px 40px;
+  margin-left: 5%;
   max-width: 100%;
-  width: 100%;
+  width: auto;
 }
 
 .line {
@@ -136,7 +136,7 @@ html::-webkit-scrollbar, body::-webkit-scrollbar { display: none; }
   display: flex;
   gap: 8px;
   margin-bottom: 5px;
-  justify-content: center;
+  justify-content: flex-start;
   flex-wrap: nowrap;
 }
 
@@ -351,15 +351,15 @@ svg.connector-svg circle {
     width: 50px;
   }
   
-  /* Main text - more zoomed in */
+  /* Main text - keep left aligned but adjust padding */
   .txt {
-    padding: 20px 20px;
-    margin-left: 0;
+    padding: 15px 15px;
+    margin-left: 3%;
   }
   
   .line {
-    font-size: clamp(28px, 12vw, 80px);
-    gap: 6px;
+    font-size: clamp(24px, 10vw, 70px);
+    gap: 5px;
   }
   
   /* Hamburger - bigger */
@@ -399,11 +399,12 @@ svg.connector-svg circle {
   }
   
   .txt {
-    padding: 10px 5px;
+    padding: 10px 10px;
+    margin-left: 2%;
   }
   
   .line {
-    font-size: clamp(18px, 11vw, 60px);
+    font-size: clamp(18px, 9vw, 55px);
     gap: 3px;
     margin-bottom: 2px;
   }
