@@ -161,8 +161,8 @@ svg.connector-svg path.intermittent {
 }
 
 svg.connector-svg line#vertical-line {
-  /* Morse code pattern: dot dash dot dot dash dash dot dash */
-  stroke-dasharray: 8 6 25 6 8 6 8 6 25 6 25 6 8 6 25 6;
+  /* Road line pattern: bigger segments */
+  stroke-dasharray: 120 50;
   stroke-linecap: round;
   transition: opacity 0.5s ease;
 }
@@ -212,6 +212,109 @@ svg.connector-svg circle {
 
 .hamburger-menu:hover .bar {
   background: #111;
+}
+
+/* Scroll indicator that appears when idle */
+.scroll-indicator {
+  position: fixed;
+  bottom: 40px;
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  z-index: 80;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.5s ease;
+}
+
+.scroll-indicator.visible {
+  opacity: 1;
+  pointer-events: auto;
+}
+
+.scroll-indicator-text {
+  color: white;
+  font-size: 12px;
+  font-weight: 500;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+}
+
+.scroll-indicator-arrow {
+  width: 20px;
+  height: 20px;
+  border-right: 2px solid white;
+  border-bottom: 2px solid white;
+  transform: rotate(45deg);
+  animation: scrollBounce 1.5s ease-in-out infinite;
+}
+
+@keyframes scrollBounce {
+  0%, 100% {
+    transform: rotate(45deg) translateY(0);
+    opacity: 1;
+  }
+  50% {
+    transform: rotate(45deg) translateY(8px);
+    opacity: 0.5;
+  }
+}
+
+/* Menu box that opens on hamburger click */
+.menu-box {
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%) scale(0);
+  width: 200px;
+  height: 150px;
+  background: #009844;
+  border-radius: 12px;
+  z-index: 99;
+  opacity: 0;
+  pointer-events: none;
+  transition: transform 0.3s ease, opacity 0.3s ease;
+  box-shadow: 0 4px 20px rgba(0, 152, 68, 0.4);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 15px;
+  padding: 20px;
+}
+
+.menu-box.open {
+  transform: translate(-50%, -50%) scale(1);
+  opacity: 1;
+  pointer-events: auto;
+}
+
+.menu-box a {
+  color: white;
+  text-decoration: none;
+  font-size: 16px;
+  font-weight: 600;
+  transition: color 0.2s ease;
+}
+
+.menu-box a:hover {
+  color: #111;
+}
+
+/* Hamburger animation when menu is open */
+.hamburger-menu.active .bar:nth-child(1) {
+  transform: rotate(45deg) translate(8px, 8px);
+}
+
+.hamburger-menu.active .bar:nth-child(2) {
+  opacity: 0;
+}
+
+.hamburger-menu.active .bar:nth-child(3) {
+  transform: rotate(-45deg) translate(8px, -8px);
 }
 </style>
 </head>
@@ -272,6 +375,12 @@ svg.connector-svg circle {
   <div class="bar"></div>
   <div class="bar"></div>
   <div class="bar"></div>
+</div>
+
+<!-- Scroll indicator that appears when idle -->
+<div class="scroll-indicator" id="scroll-indicator">
+  <span class="scroll-indicator-text">Scroll</span>
+  <div class="scroll-indicator-arrow"></div>
 </div>
 
 <section class="next-section" id="menu-section">
@@ -820,27 +929,36 @@ ScrollTrigger.create({
         word.style.color = '#111';
       });
       
-      // Update connector to follow the moving letters
+      // Update connector to follow the moving letters, but fade it out as words slide
       updateConnector(1, 0);
       connPath.classList.add('glowing');
+      // Fade out connector line at the same time as words slide
+      connPath.style.opacity = Math.max(0, 1 - slideProgress);
       
-      // Draw vertical line from cached position going down - starts as SOLID line
+      // Fade out dots at the same time
+      dots.forEach(function(dot) {
+        if (dot) dot.style.opacity = Math.max(0, 0.9 - slideProgress);
+      });
+      
+      // Draw vertical line from CENTER going down
+      var centerX = window.innerWidth / 2;
+      var centerY = window.innerHeight / 2;
       var verticalLineLength = slideProgress * window.innerHeight * 0.5;
-      verticalLine.setAttribute('x1', cachedVerticalLineX);
-      verticalLine.setAttribute('y1', cachedVerticalLineStartY);
-      verticalLine.setAttribute('x2', cachedVerticalLineX);
-      verticalLine.setAttribute('y2', cachedVerticalLineStartY + verticalLineLength);
+      verticalLine.setAttribute('x1', centerX);
+      verticalLine.setAttribute('y1', centerY);
+      verticalLine.setAttribute('x2', centerX);
+      verticalLine.setAttribute('y2', centerY + verticalLineLength);
       verticalLine.style.opacity = slideProgress > 0.1 ? 1 : 0;
       
-      // Line starts solid, no dash pattern yet
-      verticalLine.style.strokeDasharray = 'none';
+      // Use road line pattern
+      verticalLine.style.strokeDasharray = '120 50';
       verticalLine.style.strokeDashoffset = 0;
       
       // Keep background dark in this phase - no gradient yet
       panel.style.background = '#111';
       
     } else if (progress <= fadeOutPhaseEnd) {
-      // Phase 3: Line extends DOWN, then also UP from top after a bit
+      // Phase 3: Line extends DOWN, then also UP from top
       var fadeProgress = (progress - slidePhaseEnd) / (fadeOutPhaseEnd - slidePhaseEnd);
       
       // Continue sliding words off screen
@@ -850,53 +968,39 @@ ScrollTrigger.create({
         word.style.transform = 'translateX(' + slideAmount + 'px)';
       });
       
-      // Fade out the connector path
-      connPath.style.opacity = Math.max(0, 1 - fadeProgress * 2);
-      
-      // Hide all dots
+      // Connector line and dots already faded in Phase 2, keep them hidden
+      connPath.style.opacity = 0;
       dots.forEach(function(dot) {
-        if (dot) dot.style.opacity = Math.max(0, 0.9 - fadeProgress * 2);
+        if (dot) dot.style.opacity = 0;
       });
       
-      // Line extends DOWN from start point
+      // Line is CENTERED
+      var centerX = window.innerWidth / 2;
+      var centerY = window.innerHeight / 2;
+      
+      // Line extends DOWN from center
       var verticalLineLength = (window.innerHeight * 0.5) + fadeProgress * (window.innerHeight * 1.5);
-      var lineBottomY = cachedVerticalLineStartY + verticalLineLength;
+      var lineBottomY = centerY + verticalLineLength;
       
       // After 50% progress, line ALSO extends UP from top of screen
-      var lineTopY = cachedVerticalLineStartY;
+      var lineTopY = centerY;
       if (fadeProgress > 0.5) {
         var upProgress = (fadeProgress - 0.5) / 0.5; // 0 to 1 over second half
         // Line top moves up toward top of screen
-        lineTopY = cachedVerticalLineStartY - (upProgress * (cachedVerticalLineStartY + 50));
+        lineTopY = centerY - (upProgress * (centerY + 50));
       }
       
-      verticalLine.setAttribute('x1', cachedVerticalLineX);
+      verticalLine.setAttribute('x1', centerX);
       verticalLine.setAttribute('y1', lineTopY);
-      verticalLine.setAttribute('x2', cachedVerticalLineX);
+      verticalLine.setAttribute('x2', centerX);
       verticalLine.setAttribute('y2', lineBottomY);
       
-      // Line starts solid, becomes morse code in second half
-      if (fadeProgress < 0.5) {
-        // Solid while extending down
-        verticalLine.style.strokeDasharray = 'none';
-        verticalLine.style.strokeDashoffset = 0;
-      } else {
-        // Becomes intermittent/morse code
-        var morseProgress = (fadeProgress - 0.5) / 0.5; // 0 to 1 over second half
-        if (morseProgress < 0.4) {
-          // Transitioning to dashes
-          var dashSize = 50 - morseProgress * 100;
-          var gapSize = 5 + morseProgress * 10;
-          verticalLine.style.strokeDasharray = Math.max(10, dashSize) + ' ' + gapSize;
-        } else {
-          // Full morse code pattern
-          verticalLine.style.strokeDasharray = '8 6 25 6 8 6 8 6 25 6 25 6 8 6 25 6';
-        }
-        
-        // Animate the dash pattern
-        var dashOffset = morseProgress * 150;
-        verticalLine.style.strokeDashoffset = -dashOffset;
-      }
+      // Use road line pattern throughout
+      verticalLine.style.strokeDasharray = '120 50';
+      
+      // Animate the dash pattern
+      var dashOffset = fadeProgress * 150;
+      verticalLine.style.strokeDashoffset = -dashOffset;
       
       verticalLine.style.opacity = 1;
       
@@ -912,6 +1016,7 @@ ScrollTrigger.create({
       
     } else {
       // Phase 4: Line covers top to bottom, gradient rises and covers the line from bottom
+      // Line stays vertical in the center, ending at hamburger position
       var finalProgress = (progress - fadeOutPhaseEnd) / (1 - fadeOutPhaseEnd);
       
       // Hide words completely
@@ -935,21 +1040,25 @@ ScrollTrigger.create({
         panel.style.background = 'radial-gradient(ellipse 200% 100% at 50% 120%, #009844 0%, #009844 ' + (greenHeight + 10) + '%, #004d25 ' + (greenHeight + 20) + '%, #111 ' + Math.min(100, greenHeight + 50) + '%)';
       }
       
-      // Line from TOP, but bottom rises UP as gradient covers it
+      // Line stays vertical in the CENTER of the screen
+      var centerX = window.innerWidth / 2;
       var lineTopY = -50; // Above screen
-      // Line bottom moves UP as gradient fills - gradient covers the line from below
+      // Line bottom is at center of screen (where hamburger is) - gradient covers from below
+      var hamburgerY = window.innerHeight / 2;
       var gradientCoverY = window.innerHeight - (finalProgress * window.innerHeight);
-      var lineBottomY = Math.max(gradientCoverY, lineTopY + 50); // Line shrinks from bottom
+      // Line ends at hamburger position or where gradient covers it
+      var lineBottomY = Math.max(gradientCoverY, hamburgerY);
       
-      verticalLine.setAttribute('x1', cachedVerticalLineX);
+      // Keep line vertical at center
+      verticalLine.setAttribute('x1', centerX);
       verticalLine.setAttribute('y1', lineTopY);
-      verticalLine.setAttribute('x2', cachedVerticalLineX);
+      verticalLine.setAttribute('x2', centerX);
       verticalLine.setAttribute('y2', lineBottomY);
       
-      // Keep full morse code pattern
-      verticalLine.style.strokeDasharray = '8 6 25 6 8 6 8 6 25 6 25 6 8 6 25 6';
+      // Keep road line pattern
+      verticalLine.style.strokeDasharray = '120 50';
       
-      // Animate the morse code dash pattern (scrolling effect)
+      // Animate the dash pattern (scrolling effect)
       var dashOffset = 150 + finalProgress * 250;
       verticalLine.style.strokeDashoffset = -dashOffset;
       
@@ -1038,6 +1147,47 @@ window.addEventListener('load', function() {
     ScrollTrigger.refresh(); 
     updateConnector(0); 
   }, 500); 
+});
+
+// Hamburger menu click handler - reload page
+var hamburgerMenu = document.getElementById('hamburger');
+
+hamburgerMenu.addEventListener('click', function() {
+  location.reload();
+});
+
+// Idle scroll indicator
+var scrollIndicator = document.getElementById('scroll-indicator');
+var idleTimeout;
+var idleDelay = 3000; // Show after 3 seconds of no scrolling
+
+function showScrollIndicator() {
+  // Only show if not at the end (hamburger not visible) and loader is hidden
+  var hamburger = document.getElementById('hamburger');
+  var loaderHidden = loader.classList.contains('hidden');
+  if (loaderHidden && !hamburger.classList.contains('visible')) {
+    scrollIndicator.classList.add('visible');
+  }
+}
+
+function hideScrollIndicator() {
+  scrollIndicator.classList.remove('visible');
+}
+
+function resetIdleTimer() {
+  hideScrollIndicator();
+  clearTimeout(idleTimeout);
+  idleTimeout = setTimeout(showScrollIndicator, idleDelay);
+}
+
+// Listen for scroll events
+window.addEventListener('scroll', resetIdleTimer);
+window.addEventListener('mousemove', resetIdleTimer);
+window.addEventListener('touchstart', resetIdleTimer);
+
+// Start the idle timer after page loads
+window.addEventListener('load', function() {
+  setTimeout(resetIdleTimer, 1000);
 });
 </script>
 
