@@ -224,6 +224,16 @@ svg.connector-svg circle {
   pointer-events: auto;
 }
 
+/* Use image for hamburger and hide bar elements visually (kept for JS fallback) */
+.hamburger-menu img {
+  width: 40px;
+  height: auto;
+  display: block;
+}
+.hamburger-menu .bar {
+  display: none !important;
+}
+
 /* Track & Trace link at bottom of green area */
 .track-trace-link {
   position: fixed;
@@ -233,8 +243,8 @@ svg.connector-svg circle {
   color: white;
   text-decoration: none;
   font-family: 'Montserrat', Arial, Helvetica, sans-serif;
-  font-size: 20px;
-  font-weight: 500;
+  font-size: 24px;
+  font-weight: bold;
   font-style: italic;
   letter-spacing: 1px;
   z-index: 100;
@@ -515,6 +525,7 @@ svg.connector-svg circle {
 
 <!-- Fixed hamburger menu that appears during gradient animation -->
 <div class="hamburger-menu" id="hamburger">
+  <img id="hamburger-img" src="4_WebLUGATANI_AnimINICIAL_TransMENU_RASTERIZED.png" alt="menu" />
   <div class="bar"></div>
   <div class="bar"></div>
   <div class="bar"></div>
@@ -1104,6 +1115,8 @@ ScrollTrigger.create({
       hamburgerBars.forEach(function(bar) {
         bar.style.background = 'white';
       });
+      var hamburgerImg = document.getElementById('hamburger-img');
+      if (hamburgerImg) hamburgerImg.style.filter = 'brightness(0) invert(1)';
       
       // Reset vertical line dash pattern
       verticalLine.style.strokeDasharray = 'none';
@@ -1284,6 +1297,8 @@ ScrollTrigger.create({
         hamburgerBars.forEach(function(bar) {
           bar.style.background = '#111';
         });
+        var hamburgerImg = document.getElementById('hamburger-img');
+        if (hamburgerImg) hamburgerImg.style.filter = 'brightness(0)';
       } else {
         // Gradient not complete - hide hamburger and track trace link
         hamburger.classList.remove('visible');
@@ -1303,6 +1318,8 @@ ScrollTrigger.create({
     hamburgerBars.forEach(function(bar) {
       bar.style.background = '#111';
     });
+    var hamburgerImg = document.getElementById('hamburger-img');
+    if (hamburgerImg) hamburgerImg.style.filter = 'brightness(0)';
   },
   onLeaveBack: function() {
     // Reset everything when scrolling back up past the trigger
@@ -1323,6 +1340,8 @@ ScrollTrigger.create({
     hamburgerBars.forEach(function(bar) {
       bar.style.background = 'white';
     });
+    var hamburgerImg = document.getElementById('hamburger-img');
+    if (hamburgerImg) hamburgerImg.style.filter = 'brightness(0) invert(1)';
     
     // Reset vertical line
     var verticalLine = document.getElementById('vertical-line');
