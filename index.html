@@ -64,13 +64,16 @@ html::-webkit-scrollbar, body::-webkit-scrollbar { display: none; }
   display: flex;
   flex-direction: column;
   align-items: center;
-  height: 200px; /* Fixed height to prevent shifting */
+  justify-content: flex-start;
+  height: 92vh; /* Make loader content occupy most of viewport so the arrow can extend */
+  padding-top: 6vh; /* keep some space at top */
 }
 .loader-percent {
-  font-size: clamp(24px, 5vw, 48px);
-  font-weight: 600;
+  font-size: 45px; /* explicit size per request */
+  font-weight: 700;
+  font-style: italic;
   color: black;
-  margin-bottom: 10px;
+  margin-bottom: 12px;
 }
 .loader-arrow {
   margin-top: 2px; /* Closer to the line */
@@ -92,13 +95,23 @@ html::-webkit-scrollbar, body::-webkit-scrollbar { display: none; }
     transform: translateY(8px);
   }
 }
+.loader-arrow {
+  width: 100%;
+  display: flex;
+  justify-content: center;
+  align-items: flex-start;
+}
 .loader-arrow img {
-  width: 40px;
+  width: auto;
+  max-width: 90%;
+  max-height: calc(78vh); /* arrow reaches almost to bottom while leaving space for percent and top padding */
   height: auto;
-  transition: filter 0.3s ease;
+  transition: filter 0.2s ease, transform 0.2s ease;
+  display: block;
 }
 .loader-arrow:hover img {
   filter: brightness(0);
+  transform: scale(1.01);
 }
 
 .panel {
