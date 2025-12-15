@@ -126,6 +126,11 @@ html::-webkit-scrollbar, body::-webkit-scrollbar { display: none; }
   margin-left: 5%;
   max-width: 100%;
   width: auto;
+  user-select: none;
+  -webkit-user-select: none;
+  -moz-user-select: none;
+  -ms-user-select: none;
+  cursor: default;
 }
 
 .line {
@@ -138,12 +143,14 @@ html::-webkit-scrollbar, body::-webkit-scrollbar { display: none; }
   margin-bottom: 5px;
   justify-content: flex-start;
   flex-wrap: nowrap;
+  cursor: default;
 }
 
 .word { 
   display: inline-block; 
   transition: color 0.4s ease;
   opacity: 0;
+  cursor: default;
 }
 .word.from-left {
   transform: translateX(-100vw);
@@ -719,14 +726,28 @@ window.addEventListener('beforeunload', function() {
   window.scrollTo(0, 0);
 });
 
+// Prevent scroll function
+function preventScroll(e) {
+  e.preventDefault();
+  e.stopPropagation();
+  return false;
+}
+
 // Automatic word reveal animation
 function startWordRevealAnimation() {
   var allWords = document.querySelectorAll('.word');
   var duration = 2.0; // seconds for each word (slower)
   var stagger = 0.3; // delay between words (slow)
   
-  // Lock scroll during word animation
+  // Lock scroll during word animation - multiple methods for reliability
   document.body.style.overflow = 'hidden';
+  document.body.style.position = 'fixed';
+  document.body.style.width = '100%';
+  document.body.style.top = '0';
+  
+  // Also prevent scroll events
+  window.addEventListener('wheel', preventScroll, { passive: false });
+  window.addEventListener('touchmove', preventScroll, { passive: false });
   
   // Animate words from left
   gsap.to(wordsFromLeft, {
@@ -747,9 +768,19 @@ function startWordRevealAnimation() {
     delay: 0.2,
     onComplete: function() {
       textAnimationComplete = true;
+      
       // Unlock scroll after animation completes
       document.body.style.overflow = '';
-      // Refresh ScrollTrigger after text is in place
+      document.body.style.position = '';
+      document.body.style.width = '';
+      document.body.style.top = '';
+      
+      // Remove scroll prevention
+      window.removeEventListener('wheel', preventScroll);
+      window.removeEventListener('touchmove', preventScroll);
+      
+      // Ensure we're at top and refresh ScrollTrigger
+      window.scrollTo(0, 0);
       setTimeout(function() { ScrollTrigger.refresh(); }, 100);
     }
   });
@@ -986,10 +1017,14 @@ ScrollTrigger.create({
     var svg = document.getElementById('connector-svg');
     var verticalLine = document.getElementById('vertical-line');
     
-    // Only animate if text animation is complete
+    // Only animate if text animation is complete - force back to top if not
     if (!textAnimationComplete) {
       connPath.style.opacity = 0;
       verticalLine.style.opacity = 0;
+      // Force scroll back to top
+      if (progress > 0) {
+        self.scroll(0);
+      }
       return;
     }
     
