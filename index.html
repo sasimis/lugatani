@@ -802,8 +802,25 @@ document.querySelectorAll('.word').forEach(function(word) {
 
 waitForPageReady();
 animateLoader();
-// Show arrow immediately (it will expand as percent grows). Click still guarded by animationComplete.
-loaderArrow.classList.add('visible');
+// On initial load, show only the ponta image for now. The arrow and filete will remain hidden
+// until the percent progresses (filete shows after threshold in updateLoaderVisuals).
+try {
+  var pontaInit = document.getElementById('ponta-img');
+  if (pontaInit) {
+    pontaInit.style.opacity = 1;
+    pontaInit.style.transform = 'translateY(0px)';
+  }
+  // Ensure arrow is not visible yet
+  if (loaderArrow) loaderArrow.classList.remove('visible');
+  // Ensure filete hidden at start (updateLoaderVisuals will reveal it when appropriate)
+  var fileteInit = document.getElementById('filete-img');
+  if (fileteInit) {
+    fileteInit.style.opacity = 0;
+    fileteInit.style.transform = 'scaleY(0)';
+  }
+} catch (e) {
+  // ignore if elements not yet available
+}
 
 var panel = document.getElementById('main-panel');
 var connPath = document.getElementById('connector-path');
