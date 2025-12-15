@@ -512,8 +512,8 @@ svg.connector-svg circle {
     <div class="loader-percent" id="loader-percent">0%</div>
     <!-- replace previous line with two images that form the connecting line -->
     <div class="loader-line" id="loader-line">
-  <img src="Ponta%201%20(1).png" alt="ponta" id="ponta-img" draggable="false">
-  <img src="Filete%20copy%203.png" alt="filete" id="filete-img" draggable="false">
+  <img src="ponta.png" alt="ponta" id="ponta-img" draggable="false">
+  <img src="filete.png" alt="filete" id="filete-img" draggable="false">
     </div>
 
     <!-- removed separate arrow element; ponta/filete images are used for the loader visuals -->
@@ -606,7 +606,38 @@ function updateLoaderDisplay(targetPercent) {
 function checkAllReady() {
   if (resourcesLoaded && percent >= 100) {
     animationComplete = true;
-    // Make the ponta image indicate it's ready to be clicked
+    // Ensure visuals reach final state and animate the line to the ponta tip,
+    // then automatically enter the site (hide loader and start reveal).
+    var fileteImg = document.getElementById('filete-img');
+    var pontaImg = document.getElementById('ponta-img');
+
+    // Put visuals in final state immediately as a baseline
+    updateLoaderVisuals(100);
+
+    // Give a small, smooth GSAP animation to extend the filete and nudge the ponta
+    try {
+      if (fileteImg) {
+        gsap.to(fileteImg, { duration: 0.45, scaleY: 1, opacity: 1, ease: 'power2.out' });
+      }
+      if (pontaImg) {
+        // animate a small drop/nudge so it sits on the tip of the extended line
+        gsap.to(pontaImg, { duration: 0.45, y: 6, opacity: 1, ease: 'power2.out' });
+      }
+    } catch (e) {
+      // If GSAP isn't available for any reason, fall back to setting final styles
+      if (fileteImg) { fileteImg.style.transform = 'scaleY(1)'; fileteImg.style.opacity = '1'; }
+      if (pontaImg) { pontaImg.style.transform = 'translateY(6px)'; pontaImg.style.opacity = '1'; }
+    }
+
+    // Add a small pause to let the final micro-animation play, then auto-enter the site
+    setTimeout(function() {
+      loader.classList.add('hidden');
+      document.body.style.overflow = '';
+      // Start automatic word reveal animation after loader closes
+      setTimeout(startWordRevealAnimation, 400);
+    }, 500);
+
+    // Also mark ponta visually as clickable in case user prefers to click
     if (loaderTrigger) loaderTrigger.classList.add('ready-to-click');
   }
 }
