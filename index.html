@@ -110,6 +110,12 @@ html::-webkit-scrollbar, body::-webkit-scrollbar { display: none; }
   height: auto;
   transition: filter 0.2s ease, transform 0.2s ease;
   display: block;
+  /* Prevent selection and dragging so the arrow is only clickable */
+  user-select: none;
+  -webkit-user-select: none;
+  -moz-user-select: none;
+  -ms-user-select: none;
+  -webkit-user-drag: none;
 }
 .loader-arrow:hover img {
   filter: brightness(0);
@@ -494,7 +500,7 @@ svg.connector-svg circle {
   <div class="loader-content">
     <div class="loader-percent" id="loader-percent">0%</div>
     <div class="loader-arrow" id="loader-arrow">
-      <img src="1_WebLUGATANI_Loading_RASTERIZED.png" alt="arrow" id="arrow-img">
+      <img src="1_WebLUGATANI_Loading_RASTERIZED.png" alt="arrow" id="arrow-img" draggable="false">
     </div>
   </div>
 </div>
