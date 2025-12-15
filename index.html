@@ -92,10 +92,10 @@ html, body, * {
   font-style: italic;
   color: black;
   /* place percent starting from middle of viewport */
-  margin-top: calc(50vh - 45px); /* shift percent so it starts at vertical center */
+  /* shift percent a bit higher so the connecting line can sit below it and both remain on-screen */
+  margin-top: calc(38vh - 45px);
   margin-bottom: 20px; /* small gap below percent */
 }
-
 /* Line images that connect percent to arrow */
 .loader-line {
   width: 100%;
@@ -105,6 +105,19 @@ html, body, * {
   justify-content: flex-start;
   gap: 4px;
   pointer-events: none; /* individual images can enable pointer-events when ready */
+
+  /* Ensure the line always starts directly below the percentage.
+     Remove the previous large negative nudge and rely on the percent's
+     margin-bottom to create spacing. */
+  margin-top: 0;
+  margin-bottom: 20px;
+}
+
+/* Small tweak for very small viewports to keep spacing comfortable */
+@media (max-height: 480px) {
+  .loader-line {
+    margin-bottom: 12px;
+  }
 }
 .loader-line img {
   display: block;
@@ -131,6 +144,12 @@ html, body, * {
   transition: transform 0.18s ease, opacity 0.12s linear;
   pointer-events: auto; /* allow clicks once ready */
   z-index: 30;
+}
+
+/* When the loader-line is ready, make it clickable too (cursor hint) */
+.loader-line.ready-to-click {
+  cursor: pointer;
+  pointer-events: auto; /* enable clicks on the line container */
 }
 
 .panel {
@@ -266,8 +285,8 @@ svg.connector-svg circle {
 .hamburger-menu .bar {
   display: none !important;
 }
-
-/* Track & Trace link at bottom of green area */
+  /* Place the connecting line below the percent so both are visible on screen */
+  margin-top: 3vh;
 .track-trace-link {
   position: fixed;
   bottom: 80px;
@@ -422,6 +441,8 @@ svg.connector-svg circle {
   #ponta-img {
     width: 50px;
   }
+  /* keep the connecting line below the percent on medium screens */
+  .loader-line { margin-top: 2.5vh; }
   
   /* Main text - keep left aligned but adjust padding */
   .txt {
@@ -476,6 +497,8 @@ svg.connector-svg circle {
   #ponta-img {
     width: 60px;
   }
+  /* keep the connecting line below the percent on extra-small phones */
+  .loader-line { margin-top: 1.5vh; }
   
   .txt {
     padding: 10px 10px;
@@ -591,6 +614,8 @@ var loader = document.getElementById('loader');
 var loaderPercent = document.getElementById('loader-percent');
 // Use the ponta image as the clickable loader trigger instead of a separate arrow element
 var loaderTrigger = document.getElementById('ponta-img');
+// Also reference the whole loader line container so it can be clickable when ready
+var loaderLine = document.getElementById('loader-line');
 var percent = 0;
 var maxLineHeight = 100;
 var resourcesLoaded = false;
@@ -646,6 +671,13 @@ function checkAllReady() {
       loaderTrigger.classList.add('ready-to-click');
       loaderTrigger.style.pointerEvents = 'auto';
     }
+    // Also make the whole connecting line clickable and show affordance
+    try {
+      if (loaderLine) {
+        loaderLine.classList.add('ready-to-click');
+        loaderLine.style.pointerEvents = 'auto';
+      }
+    } catch (e) {}
   }
 }
 
@@ -755,6 +787,16 @@ if (loaderTrigger) {
     loader.classList.add('hidden');
     document.body.style.overflow = '';
     // Start automatic word reveal animation after loader closes
+    setTimeout(startWordRevealAnimation, 600);
+  });
+}
+
+// Also allow clicking the whole connecting line area to enter (same behavior as clicking ponta)
+if (loaderLine) {
+  loaderLine.addEventListener('click', function() {
+    if (!animationComplete) return; // Wait until ready
+    loader.classList.add('hidden');
+    document.body.style.overflow = '';
     setTimeout(startWordRevealAnimation, 600);
   });
 }
