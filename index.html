@@ -43,6 +43,16 @@ html, body {
 }
 html::-webkit-scrollbar, body::-webkit-scrollbar { display: none; }
 
+/* Prevent image dragging and touch callout on iOS globally */
+img {
+  -webkit-user-drag: none;
+  user-select: none;
+  -webkit-user-select: none;
+  -moz-user-select: none;
+  -ms-user-select: none;
+  -webkit-touch-callout: none;
+}
+
 .loader-overlay {
   position: fixed;
   top: 0; left: 0;
@@ -1540,6 +1550,21 @@ document.addEventListener('visibilitychange', function() {
       location.reload();
     }
   }
+});
+
+// Make all images non-draggable and prevent dragstart so images cannot be selected or dragged
+document.addEventListener('DOMContentLoaded', function() {
+  document.querySelectorAll('img').forEach(function(img) {
+    try {
+      img.setAttribute('draggable', 'false');
+      img.style.webkitUserDrag = 'none';
+      img.style.userSelect = 'none';
+      img.style.webkitTouchCallout = 'none';
+      img.addEventListener('dragstart', function(e) { e.preventDefault(); });
+    } catch (e) {
+      // ignore
+    }
+  });
 });
 </script>
 
