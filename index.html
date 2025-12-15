@@ -234,7 +234,7 @@ svg.connector-svg circle {
   color: white;
   text-decoration: none;
   font-family: 'Montserrat', Arial, Helvetica, sans-serif;
-  font-size: 16px;
+  font-size: 20px;
   font-weight: 500;
   font-style: italic;
   letter-spacing: 1px;
@@ -405,7 +405,7 @@ svg.connector-svg circle {
   /* Track & Trace link */
   .track-trace-link {
     bottom: 70px;
-    font-size: 14px;
+    font-size: 18px;
   }
   
   /* Scroll indicator */
@@ -458,7 +458,7 @@ svg.connector-svg circle {
   /* Track & Trace link */
   .track-trace-link {
     bottom: 60px;
-    font-size: 12px;
+    font-size: 16px;
   }
 }
 </style>
@@ -725,6 +725,9 @@ function startWordRevealAnimation() {
   var duration = 2.0; // seconds for each word (slower)
   var stagger = 0.3; // delay between words (slow)
   
+  // Lock scroll during word animation
+  document.body.style.overflow = 'hidden';
+  
   // Animate words from left
   gsap.to(wordsFromLeft, {
     opacity: 1,
@@ -744,6 +747,8 @@ function startWordRevealAnimation() {
     delay: 0.2,
     onComplete: function() {
       textAnimationComplete = true;
+      // Unlock scroll after animation completes
+      document.body.style.overflow = '';
       // Refresh ScrollTrigger after text is in place
       setTimeout(function() { ScrollTrigger.refresh(); }, 100);
     }
