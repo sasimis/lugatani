@@ -1039,14 +1039,14 @@ ScrollTrigger.create({
       return;
     }
     
-    // Phase 1: Connector line through letters (0% to 20%)
-    // Phase 2: Words slide right, connector follows, vertical line starts (20% to 45%)
-    // Phase 3: Everything slides off, vertical line extends down (45% to 70%)
-    // Phase 4: Only vertical line remains, continues down (70% to 100%)
+  // Phase 1: Connector line through letters (0% to 20%)
+  // Phase 2: Words slide right, connector follows, vertical line starts (20% to 60%)
+  // Phase 3: Everything slides off, vertical line extends down (60% to 85%)
+  // Phase 4: Only vertical line remains, continues down (85% to 100%)
     
-    var letterPhaseEnd = 0.20;
-    var slidePhaseEnd = 0.45;
-    var fadeOutPhaseEnd = 0.70;
+  var letterPhaseEnd = 0.20;
+  var slidePhaseEnd = 0.60; // extended to slow the left->right slide
+  var fadeOutPhaseEnd = 0.85;
     
     // Get the last letter position for vertical line start point
     var lastLetterPos = getLetterCenter('letter-6');
@@ -1068,8 +1068,10 @@ ScrollTrigger.create({
       verticalLine.style.opacity = 0;
       verticalLine.style.filter = 'none';
       
-      // Keep background dark
-      panel.style.background = '#111';
+  // Keep background dark
+  panel.style.background = '#111';
+  // Ensure panel is left-aligned during the initial connector phase
+  panel.style.justifyContent = 'flex-start';
       
       // Reset ALL words - position and opacity
       var allWords = document.querySelectorAll('.word');
@@ -1143,7 +1145,9 @@ ScrollTrigger.create({
       
     } else if (progress <= slidePhaseEnd) {
       // Phase 2: Words + connector slide right, vertical line appears
-      var slideProgress = (progress - letterPhaseEnd) / (slidePhaseEnd - letterPhaseEnd);
+  var slideProgress = (progress - letterPhaseEnd) / (slidePhaseEnd - letterPhaseEnd);
+  // Center the panel while words slide from left to right
+  panel.style.justifyContent = 'center';
       
       // Cache the vertical line start position before sliding
       if (!cachedVerticalLineX) {
@@ -1195,7 +1199,9 @@ ScrollTrigger.create({
       
     } else if (progress <= fadeOutPhaseEnd) {
       // Phase 3: Line extends DOWN, then also UP from top
-      var fadeProgress = (progress - slidePhaseEnd) / (fadeOutPhaseEnd - slidePhaseEnd);
+  var fadeProgress = (progress - slidePhaseEnd) / (fadeOutPhaseEnd - slidePhaseEnd);
+  // After sliding completes, restore left alignment for the panel
+  panel.style.justifyContent = 'flex-start';
       
       // Continue sliding words off screen
       var slideAmount = (window.innerWidth * 0.5) + fadeProgress * (window.innerWidth * 0.8);
