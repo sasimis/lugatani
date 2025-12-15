@@ -191,8 +191,7 @@ svg.connector-svg path.intermittent {
 }
 
 svg.connector-svg line#vertical-line {
-  /* Road line pattern: bigger segments */
-  stroke-dasharray: 120 50;
+  /* Solid straight line - no dashes */
   stroke-linecap: round;
   transition: opacity 0.5s ease;
 }
@@ -1158,18 +1157,19 @@ ScrollTrigger.create({
         if (dot) dot.style.opacity = Math.max(0, 0.9 - slideProgress);
       });
       
-      // Draw vertical line from CENTER going down
-      var centerX = window.innerWidth / 2;
-      var centerY = window.innerHeight / 2;
+      // Draw vertical line starting from last letter position going down
+      var lastLetterPos = getLetterCenter('letter-6');
+      var startX = lastLetterPos ? lastLetterPos.x : window.innerWidth / 2;
+      var startY = lastLetterPos ? lastLetterPos.y : window.innerHeight / 2;
       var verticalLineLength = slideProgress * window.innerHeight * 0.5;
-      verticalLine.setAttribute('x1', centerX);
-      verticalLine.setAttribute('y1', centerY);
-      verticalLine.setAttribute('x2', centerX);
-      verticalLine.setAttribute('y2', centerY + verticalLineLength);
+      verticalLine.setAttribute('x1', startX);
+      verticalLine.setAttribute('y1', startY);
+      verticalLine.setAttribute('x2', startX);
+      verticalLine.setAttribute('y2', startY + verticalLineLength);
       verticalLine.style.opacity = slideProgress > 0.1 ? 1 : 0;
       
-      // Use road line pattern
-      verticalLine.style.strokeDasharray = '120 50';
+      // Solid line - no dashes
+      verticalLine.style.strokeDasharray = 'none';
       verticalLine.style.strokeDashoffset = 0;
       
       // Keep background dark in this phase - no gradient yet
@@ -1192,11 +1192,12 @@ ScrollTrigger.create({
         if (dot) dot.style.opacity = 0;
       });
       
-      // Line is CENTERED
-      var centerX = window.innerWidth / 2;
-      var centerY = window.innerHeight / 2;
+      // Line starts from last letter position (or center if not available)
+      var lastLetterPos = getLetterCenter('letter-6');
+      var centerX = lastLetterPos ? lastLetterPos.x : window.innerWidth / 2;
+      var centerY = lastLetterPos ? lastLetterPos.y : window.innerHeight / 2;
       
-      // Line extends DOWN from center
+      // Line extends DOWN from last letter
       var verticalLineLength = (window.innerHeight * 0.5) + fadeProgress * (window.innerHeight * 1.5);
       var lineBottomY = centerY + verticalLineLength;
       
@@ -1213,12 +1214,9 @@ ScrollTrigger.create({
       verticalLine.setAttribute('x2', centerX);
       verticalLine.setAttribute('y2', lineBottomY);
       
-      // Use road line pattern throughout
-      verticalLine.style.strokeDasharray = '120 50';
-      
-      // Animate the dash pattern
-      var dashOffset = fadeProgress * 150;
-      verticalLine.style.strokeDashoffset = -dashOffset;
+      // Solid line - no dashes
+      verticalLine.style.strokeDasharray = 'none';
+      verticalLine.style.strokeDashoffset = 0;
       
       verticalLine.style.opacity = 1;
       
@@ -1273,12 +1271,9 @@ ScrollTrigger.create({
       verticalLine.setAttribute('x2', centerX);
       verticalLine.setAttribute('y2', lineBottomY);
       
-      // Keep road line pattern
-      verticalLine.style.strokeDasharray = '120 50';
-      
-      // Animate the dash pattern (scrolling effect)
-      var dashOffset = 150 + finalProgress * 250;
-      verticalLine.style.strokeDashoffset = -dashOffset;
+      // Solid line - no dashes
+      verticalLine.style.strokeDasharray = 'none';
+      verticalLine.style.strokeDashoffset = 0;
       
       // Line stays visible until it's fully covered
       var lineOpacity = finalProgress >= 1 ? 0 : 1;
