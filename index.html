@@ -93,52 +93,7 @@ html, body, * {
   color: black;
   /* place percent starting from middle of viewport */
   margin-top: calc(50vh - 45px); /* shift percent so it starts at vertical center */
-  margin-bottom: 20px; /* small gap between percent and arrow */
-}
-.loader-arrow {
-  margin-top: 2px; /* Closer to the line */
-  opacity: 0;
-  transform: translateY(-10px);
-  transition: opacity 0.4s ease;
-  cursor: pointer;
-}
-.loader-arrow.visible {
-  opacity: 1;
-  transform: translateY(0);
-  animation: bounceArrow 1.2s ease-in-out infinite;
-}
-@keyframes bounceArrow {
-  0%, 100% {
-    transform: translateY(0);
-  }
-  50% {
-    transform: translateY(8px);
-  }
-}
-.loader-arrow {
-  width: 100%;
-  display: flex;
-  justify-content: center;
-  align-items: flex-start;
-}
-.loader-arrow img {
-  width: auto;
-  max-width: 90%;
-  /* Arrow should occupy the lower half of the viewport (minus the percent and small gap) */
-  max-height: calc(50vh - 65px);
-  height: auto;
-  transition: filter 0.2s ease, transform 0.2s ease;
-  display: block;
-  /* Prevent selection and dragging so the arrow is only clickable */
-  user-select: none;
-  -webkit-user-select: none;
-  -moz-user-select: none;
-  -ms-user-select: none;
-  -webkit-user-drag: none;
-}
-.loader-arrow:hover img {
-  filter: brightness(0);
-  transform: scale(1.01);
+  margin-bottom: 20px; /* small gap below percent */
 }
 
 /* Line images that connect percent to arrow */
@@ -169,10 +124,11 @@ html, body, * {
   transition: transform 0.12s linear, opacity 0.12s linear;
   opacity: 0;
 }
-/* Arrow will grow slightly as percent increases */
-#arrow-img {
-  transform-origin: center top;
-  transform: scaleY(0.25);
+/* When ponta is ready-to-click, give a subtle affordance */
+#ponta-img.ready-to-click {
+  cursor: pointer;
+  transform: translateY(0) scale(1.02);
+  transition: transform 0.18s ease, opacity 0.12s linear;
 }
 
 .panel {
@@ -460,7 +416,8 @@ svg.connector-svg circle {
     font-size: clamp(28px, 10vw, 64px);
   }
   
-  .loader-arrow img {
+  /* make ponta image smaller on mid-size screens */
+  #ponta-img {
     width: 50px;
   }
   
@@ -513,7 +470,8 @@ svg.connector-svg circle {
     font-size: clamp(36px, 12vw, 72px);
   }
   
-  .loader-arrow img {
+  /* make ponta image smaller on extra-small screens */
+  #ponta-img {
     width: 60px;
   }
   
@@ -554,8 +512,8 @@ svg.connector-svg circle {
     <div class="loader-percent" id="loader-percent">0%</div>
     <!-- replace previous line with two images that form the connecting line -->
     <div class="loader-line" id="loader-line">
-      <img src="Ponta 1 (1).png" alt="ponta" id="ponta-img" draggable="false">
-      <img src="Filete copy 3.png" alt="filete" id="filete-img" draggable="false">
+  <img src="Ponta%201%20(1).png" alt="ponta" id="ponta-img" draggable="false">
+  <img src="Filete%20copy%203.png" alt="filete" id="filete-img" draggable="false">
     </div>
 
     <!-- removed separate arrow element; ponta/filete images are used for the loader visuals -->
