@@ -65,15 +65,16 @@ html::-webkit-scrollbar, body::-webkit-scrollbar { display: none; }
   flex-direction: column;
   align-items: center;
   justify-content: flex-start;
-  height: 92vh; /* Make loader content occupy most of viewport so the arrow can extend */
-  padding-top: 6vh; /* keep some space at top */
+  height: 100vh; /* full viewport so we can place percent at middle */
 }
 .loader-percent {
   font-size: 45px; /* explicit size per request */
   font-weight: 700;
   font-style: italic;
   color: black;
-  margin-bottom: 12px;
+  /* place percent starting from middle of viewport */
+  margin-top: calc(50vh - 45px); /* shift percent so it starts at vertical center */
+  margin-bottom: 20px; /* small gap between percent and arrow */
 }
 .loader-arrow {
   margin-top: 2px; /* Closer to the line */
@@ -104,7 +105,8 @@ html::-webkit-scrollbar, body::-webkit-scrollbar { display: none; }
 .loader-arrow img {
   width: auto;
   max-width: 90%;
-  max-height: calc(78vh); /* arrow reaches almost to bottom while leaving space for percent and top padding */
+  /* Arrow should occupy the lower half of the viewport (minus the percent and small gap) */
+  max-height: calc(50vh - 65px);
   height: auto;
   transition: filter 0.2s ease, transform 0.2s ease;
   display: block;
