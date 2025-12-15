@@ -72,12 +72,6 @@ html::-webkit-scrollbar, body::-webkit-scrollbar { display: none; }
   color: black;
   margin-bottom: 10px;
 }
-.loader-line {
-  width: 2px;
-  height: 0;
-  background: white;
-  transition: height 0.1s linear;
-}
 .loader-arrow {
   margin-top: 2px; /* Closer to the line */
   opacity: 0;
@@ -473,7 +467,6 @@ svg.connector-svg circle {
 <div class="loader-overlay" id="loader">
   <div class="loader-content">
     <div class="loader-percent" id="loader-percent">0%</div>
-    <div class="loader-line" id="loader-line"></div>
     <div class="loader-arrow" id="loader-arrow">
       <img src="1_WebLUGATANI_Loading_RASTERIZED.png" alt="arrow" id="arrow-img">
     </div>
@@ -544,7 +537,6 @@ gsap.registerPlugin(ScrollTrigger);
 
 var loader = document.getElementById('loader');
 var loaderPercent = document.getElementById('loader-percent');
-var loaderLine = document.getElementById('loader-line');
 var loaderArrow = document.getElementById('loader-arrow');
 var percent = 0;
 var maxLineHeight = 100;
@@ -557,7 +549,6 @@ var loadedResources = 0;
 
 function updateLoaderDisplay(targetPercent) {
   loaderPercent.textContent = Math.floor(targetPercent) + '%';
-  loaderLine.style.height = (targetPercent / 100) * maxLineHeight + 'px';
 }
 
 function checkAllReady() {
