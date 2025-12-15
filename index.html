@@ -700,6 +700,7 @@ animateLoader();
 
 var panel = document.getElementById('main-panel');
 var connPath = document.getElementById('connector-path');
+var txtEl = document.querySelector('.txt');
 var letterIds = ['letter-1', 'letter-2', 'letter-3', 'letter-4', 'letter-5', 'letter-6'];
 var dots = [];
 for (var i = 0; i < 7; i++) {
@@ -717,6 +718,31 @@ var cachedVerticalLineStartY = null;
 var wordsFromLeft = document.querySelectorAll('.word.from-left');
 var wordsFromRight = document.querySelectorAll('.word.from-right');
 var textAnimationComplete = false;
+
+// Alignment animation state
+var currentAlignment = 'left'; // 'left' or 'center'
+
+function animateTxtAlignment(target, immediate) {
+  if (!txtEl) return;
+  if (target === currentAlignment) return;
+  // Compute current bounding rect and desired center offset
+  var rect = txtEl.getBoundingClientRect();
+  var panelRect = panel.getBoundingClientRect();
+  var duration = immediate ? 0 : 0.55;
+  var ease = 'power2.out';
+
+  if (target === 'center') {
+    var centerX = (window.innerWidth - rect.width) / 2;
+    var dx = centerX - rect.left;
+    gsap.to(txtEl, { x: dx, duration: duration, ease: ease, overwrite: true });
+  } else {
+    // Restore to natural flow (no translate)
+    gsap.to(txtEl, { x: 0, duration: duration, ease: ease, overwrite: true });
+  }
+
+  currentAlignment = target;
+}
+
 
 // Reset state on page load/reload
 function resetState() {
@@ -1069,10 +1095,9 @@ ScrollTrigger.create({
       verticalLine.style.opacity = 0;
       verticalLine.style.filter = 'none';
       
-  // Keep background dark
+    // Keep background dark
   panel.style.background = '#111';
-  // Ensure panel is left-aligned during the initial connector phase
-  panel.style.justifyContent = 'flex-start';
+  // Alignment is controlled by CSS; do not change `justifyContent` here.
       
       // Reset ALL words - position and opacity
       var allWords = document.querySelectorAll('.word');
@@ -1147,8 +1172,8 @@ ScrollTrigger.create({
     } else if (progress <= slidePhaseEnd) {
       // Phase 2: Words + connector slide right, vertical line appears
   var slideProgress = (progress - letterPhaseEnd) / (slidePhaseEnd - letterPhaseEnd);
-  // Center the panel while words slide from left to right
-  panel.style.justifyContent = 'center';
+  // Smoothly center the text container during the slide phase
+  animateTxtAlignment('center');
       
       // Cache the vertical line start position before sliding
       if (!cachedVerticalLineX) {
@@ -1201,8 +1226,8 @@ ScrollTrigger.create({
     } else if (progress <= fadeOutPhaseEnd) {
       // Phase 3: Line extends DOWN, then also UP from top
   var fadeProgress = (progress - slidePhaseEnd) / (fadeOutPhaseEnd - slidePhaseEnd);
-  // After sliding completes, restore left alignment for the panel
-  panel.style.justifyContent = 'flex-start';
+  // Restore left alignment smoothly after the slide phase completes
+  animateTxtAlignment('left');
       
       // Continue sliding words off screen
       var slideAmount = (window.innerWidth * 0.5) + fadeProgress * (window.innerWidth * 0.8);
@@ -1389,10 +1414,19 @@ ScrollTrigger.create({
     dots.forEach(function(dot) {
       if (dot) dot.style.opacity = 0;
     });
+    // Reset text container alignment transform immediately
+    animateTxtAlignment('left', true);
   }
 });
 
 window.addEventListener('resize', function() { ScrollTrigger.refresh(); });
+// On resize, recompute alignment target immediately to avoid jumps
+window.addEventListener('resize', function() {
+  // Refresh ScrollTrigger and reposition txt for current alignment
+  ScrollTrigger.refresh();
+  // Re-apply alignment without animation for clean layout
+  animateTxtAlignment(currentAlignment, true);
+});
 
 // Comprehensive reset on page load
 window.addEventListener('load', function() { 
