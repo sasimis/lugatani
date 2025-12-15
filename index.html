@@ -1212,20 +1212,9 @@ ScrollTrigger.create({
         cachedVerticalLineStartY = verticalLineStartY;
       }
       
-      // Update connector progress based on the mapped connectorProgress so letters are marked passed
+      // Update connector progress so letters/dots update, but DO NOT move the main text yet.
+      // The main text will only slide when the vertical line starts extending down (Phase 3).
       updateConnector(connectorProgress, 0);
-
-      // Slide words in discrete steps only when connector passes the next letter.
-      // Compute how many letters have been passed (0..letterCount)
-      var letterCount = letterIds.length;
-      var passedLetters = Math.floor(connectorProgress * letterCount);
-      // Slide distance proportional to passed letters (stepped)
-      var maxSlide = window.innerWidth * 0.5;
-      var slideAmount = (passedLetters / Math.max(1, letterCount)) * maxSlide;
-      var allWords = document.querySelectorAll('.word');
-      allWords.forEach(function(word) {
-        word.style.transform = 'translateX(' + slideAmount + 'px)';
-      });
       
       // Vanishing words are already dark from Phase 1 - keep them dark
       var vanishingWords = document.querySelectorAll('.word.vanishes');
