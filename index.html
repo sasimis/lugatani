@@ -53,6 +53,15 @@ img {
   -webkit-touch-callout: none;
 }
 
+/* Disable selection and dragging globally for a smooth experience */
+html, body, * {
+  -webkit-user-select: none;
+  -moz-user-select: none;
+  -ms-user-select: none;
+  user-select: none;
+  -webkit-touch-callout: none; /* iOS long-press menu */
+}
+
 .loader-overlay {
   position: fixed;
   top: 0; left: 0;
@@ -1565,6 +1574,9 @@ document.addEventListener('DOMContentLoaded', function() {
       // ignore
     }
   });
+  // Prevent any element from being dragged or selected at the document level
+  document.addEventListener('dragstart', function(e) { e.preventDefault(); });
+  document.addEventListener('selectstart', function(e) { e.preventDefault(); });
 });
 </script>
 
