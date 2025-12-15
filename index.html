@@ -104,7 +104,7 @@ html, body, * {
   align-items: center;
   justify-content: flex-start;
   gap: 4px;
-  pointer-events: none;
+  pointer-events: none; /* individual images can enable pointer-events when ready */
 }
 .loader-line img {
   display: block;
@@ -129,6 +129,8 @@ html, body, * {
   cursor: pointer;
   transform: translateY(0) scale(1.02);
   transition: transform 0.18s ease, opacity 0.12s linear;
+  pointer-events: auto; /* allow clicks once ready */
+  z-index: 30;
 }
 
 .panel {
@@ -512,8 +514,9 @@ svg.connector-svg circle {
     <div class="loader-percent" id="loader-percent">0%</div>
     <!-- replace previous line with two images that form the connecting line -->
     <div class="loader-line" id="loader-line">
-  <img src="ponta.png" alt="ponta" id="ponta-img" draggable="false">
+  <!-- filete should be above and grow downward toward the ponta tip -->
   <img src="filete.png" alt="filete" id="filete-img" draggable="false">
+  <img src="ponta.png" alt="ponta" id="ponta-img" draggable="false">
     </div>
 
     <!-- removed separate arrow element; ponta/filete images are used for the loader visuals -->
@@ -629,16 +632,20 @@ function checkAllReady() {
       if (pontaImg) { pontaImg.style.transform = 'translateY(6px)'; pontaImg.style.opacity = '1'; }
     }
 
-    // Add a small pause to let the final micro-animation play, then auto-enter the site
-    setTimeout(function() {
-      loader.classList.add('hidden');
-      document.body.style.overflow = '';
-      // Start automatic word reveal animation after loader closes
-      setTimeout(startWordRevealAnimation, 400);
-    }, 500);
+    // Let the visuals settle to final state, but DO NOT auto-enter.
+    // Users should click the ponta (tip) to enter. Indicate readiness and enable clicking.
+    try {
+      if (pontaImg) {
+        // small pulse so users notice it's interactive
+        gsap.fromTo(pontaImg, { scale: 0.98 }, { duration: 0.6, scale: 1.02, yoyo: true, repeat: 1, ease: 'power1.inOut' });
+      }
+    } catch (e) {}
 
-    // Also mark ponta visually as clickable in case user prefers to click
-    if (loaderTrigger) loaderTrigger.classList.add('ready-to-click');
+    // Mark ponta visually as clickable and enable pointer events
+    if (loaderTrigger) {
+      loaderTrigger.classList.add('ready-to-click');
+      loaderTrigger.style.pointerEvents = 'auto';
+    }
   }
 }
 
