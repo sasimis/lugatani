@@ -95,6 +95,12 @@ html, body, * {
   /* shift percent a bit higher so the connecting line can sit below it and both remain on-screen */
   margin-top: calc(38vh - 45px);
   margin-bottom: 20px; /* small gap below percent */
+
+  /* Center the percentage text horizontally without affecting layout flow
+     so the connecting line below won't be pushed down. Using both
+     text-align and align-self for robust centering inside the flex column. */
+  text-align: center;
+  align-self: center;
 }
 /* Line images that connect percent to arrow */
 .loader-line {
