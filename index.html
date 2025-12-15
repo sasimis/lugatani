@@ -141,6 +141,40 @@ html, body, * {
   transform: scale(1.01);
 }
 
+/* Line images that connect percent to arrow */
+.loader-line {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: flex-start;
+  gap: 4px;
+  pointer-events: none;
+}
+.loader-line img {
+  display: block;
+  max-width: 90%;
+  height: auto;
+  transition: transform 0.12s linear, opacity 0.12s linear;
+}
+/* filete grows downward from its top so it appears to extend */
+#filete-img {
+  transform-origin: center top;
+  transform: scaleY(0);
+  opacity: 0;
+}
+/* ponta stays visible but can be moved slightly to connect */
+#ponta-img {
+  transform-origin: center center;
+  transition: transform 0.12s linear, opacity 0.12s linear;
+  opacity: 0;
+}
+/* Arrow will grow slightly as percent increases */
+#arrow-img {
+  transform-origin: center top;
+  transform: scaleY(0.25);
+}
+
 .panel {
   height: 100vh;
   display: flex;
@@ -518,6 +552,12 @@ svg.connector-svg circle {
 <div class="loader-overlay" id="loader">
   <div class="loader-content">
     <div class="loader-percent" id="loader-percent">0%</div>
+    <!-- replace previous line with two images that form the connecting line -->
+    <div class="loader-line" id="loader-line">
+      <img src="Ponta 1 (1).png" alt="ponta" id="ponta-img" draggable="false">
+      <img src="Filete copy 3.png" alt="filete" id="filete-img" draggable="false">
+    </div>
+
     <div class="loader-arrow" id="loader-arrow">
       <img src="1_WebLUGATANI_Loading_RASTERIZED.png" alt="arrow" id="arrow-img" draggable="false">
     </div>
@@ -602,6 +642,8 @@ var loadedResources = 0;
 
 function updateLoaderDisplay(targetPercent) {
   loaderPercent.textContent = Math.floor(targetPercent) + '%';
+  // Update visual connection between line and arrow as percentage changes
+  updateLoaderVisuals(Math.floor(targetPercent));
 }
 
 function checkAllReady() {
@@ -629,6 +671,43 @@ function animateLoader() {
       checkAllReady();
     }
   }, 25);
+}
+
+// Update the loader visuals: arrow scale, filete (line) extension and ponta visibility
+function updateLoaderVisuals(percentValue) {
+  var p = Math.max(0, Math.min(100, percentValue)) / 100;
+  var arrowImg = document.getElementById('arrow-img');
+  var fileteImg = document.getElementById('filete-img');
+  var pontaImg = document.getElementById('ponta-img');
+  if (!arrowImg || !fileteImg || !pontaImg) return;
+
+  // Arrow scales vertically from 0.25 to 1.0 as percent goes 0..100
+  var arrowScale = 0.25 + 0.75 * p;
+  arrowImg.style.transform = 'scaleY(' + arrowScale + ')';
+
+  // Filete (the connecting line) scales downward from 0 to nearly full based on percent
+  // but starts showing after a small threshold so arrow appears first
+  var fileteThreshold = 0.02; // show shortly after start
+  if (p > fileteThreshold) {
+    fileteImg.style.opacity = 1;
+    // Map p from threshold..1 to 0..1
+    var mapped = (p - fileteThreshold) / (1 - fileteThreshold);
+    fileteImg.style.transform = 'scaleY(' + mapped + ')';
+  } else {
+    fileteImg.style.opacity = 0;
+    fileteImg.style.transform = 'scaleY(0)';
+  }
+
+  // Ponta (tip) becomes visible as soon as filete starts showing and nudges slightly
+  if (p > fileteThreshold) {
+    pontaImg.style.opacity = 1;
+    // small nudge to visually connect when near the end
+    var nudge = Math.min(8, mapped * 8); // px
+    pontaImg.style.transform = 'translateY(' + nudge + 'px)';
+  } else {
+    pontaImg.style.opacity = 0;
+    pontaImg.style.transform = 'translateY(0px)';
+  }
 }
 
 // Count and track all resources
@@ -723,6 +802,8 @@ document.querySelectorAll('.word').forEach(function(word) {
 
 waitForPageReady();
 animateLoader();
+// Show arrow immediately (it will expand as percent grows). Click still guarded by animationComplete.
+loaderArrow.classList.add('visible');
 
 var panel = document.getElementById('main-panel');
 var connPath = document.getElementById('connector-path');
