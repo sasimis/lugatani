@@ -558,9 +558,7 @@ svg.connector-svg circle {
       <img src="Filete copy 3.png" alt="filete" id="filete-img" draggable="false">
     </div>
 
-    <div class="loader-arrow" id="loader-arrow">
-      <img src="1_WebLUGATANI_Loading_RASTERIZED.png" alt="arrow" id="arrow-img" draggable="false">
-    </div>
+    <!-- removed separate arrow element; ponta/filete images are used for the loader visuals -->
   </div>
 </div>
 
@@ -630,7 +628,8 @@ gsap.registerPlugin(ScrollTrigger);
 
 var loader = document.getElementById('loader');
 var loaderPercent = document.getElementById('loader-percent');
-var loaderArrow = document.getElementById('loader-arrow');
+// Use the ponta image as the clickable loader trigger instead of a separate arrow element
+var loaderTrigger = document.getElementById('ponta-img');
 var percent = 0;
 var maxLineHeight = 100;
 var resourcesLoaded = false;
@@ -649,7 +648,8 @@ function updateLoaderDisplay(targetPercent) {
 function checkAllReady() {
   if (resourcesLoaded && percent >= 100) {
     animationComplete = true;
-    loaderArrow.classList.add('visible');
+    // Make the ponta image indicate it's ready to be clicked
+    if (loaderTrigger) loaderTrigger.classList.add('ready-to-click');
   }
 }
 
@@ -676,14 +676,9 @@ function animateLoader() {
 // Update the loader visuals: arrow scale, filete (line) extension and ponta visibility
 function updateLoaderVisuals(percentValue) {
   var p = Math.max(0, Math.min(100, percentValue)) / 100;
-  var arrowImg = document.getElementById('arrow-img');
   var fileteImg = document.getElementById('filete-img');
   var pontaImg = document.getElementById('ponta-img');
-  if (!arrowImg || !fileteImg || !pontaImg) return;
-
-  // Arrow scales vertically from 0.25 to 1.0 as percent goes 0..100
-  var arrowScale = 0.25 + 0.75 * p;
-  arrowImg.style.transform = 'scaleY(' + arrowScale + ')';
+  if (!fileteImg || !pontaImg) return;
 
   // Filete (the connecting line) scales downward from 0 to nearly full based on percent
   // but starts showing after a small threshold so arrow appears first
@@ -757,13 +752,16 @@ function waitForPageReady() {
   }
 }
 
-loaderArrow.addEventListener('click', function() {
-  if (!animationComplete) return; // Don't allow click until ready
-  loader.classList.add('hidden');
-  document.body.style.overflow = '';
-  // Start automatic word reveal animation after loader closes
-  setTimeout(startWordRevealAnimation, 600);
-});
+// Make the ponta image clickable once the loader reaches 100%
+if (loaderTrigger) {
+  loaderTrigger.addEventListener('click', function() {
+    if (!animationComplete) return; // Wait until ready
+    loader.classList.add('hidden');
+    document.body.style.overflow = '';
+    // Start automatic word reveal animation after loader closes
+    setTimeout(startWordRevealAnimation, 600);
+  });
+}
 
 // Force scroll to top and reset state on page load/reload
 window.scrollTo(0, 0);
@@ -810,8 +808,7 @@ try {
     pontaInit.style.opacity = 1;
     pontaInit.style.transform = 'translateY(0px)';
   }
-  // Ensure arrow is not visible yet
-  if (loaderArrow) loaderArrow.classList.remove('visible');
+  // No separate arrow element anymore; ponta will indicate readiness
   // Ensure filete hidden at start (updateLoaderVisuals will reveal it when appropriate)
   var fileteInit = document.getElementById('filete-img');
   if (fileteInit) {
