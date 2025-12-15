@@ -801,15 +801,11 @@ function buildPath(exitLineLength) {
   }
   if (points.length < 2) return '';
   
+  // Use straight lines instead of curves
   var d = 'M ' + points[0].x + ' ' + points[0].y;
   for (var j = 1; j < points.length; j++) {
-    var prev = points[j - 1], curr = points[j];
-    // Use cubic bezier for more control - keep curves tighter
-    var cpX1 = prev.x + (curr.x - prev.x) * 0.3;
-    var cpY1 = prev.y + (curr.y - prev.y) * 0.1;
-    var cpX2 = prev.x + (curr.x - prev.x) * 0.7;
-    var cpY2 = curr.y - (curr.y - prev.y) * 0.1;
-    d += ' C ' + cpX1 + ' ' + cpY1 + ', ' + cpX2 + ' ' + cpY2 + ', ' + curr.x + ' ' + curr.y;
+    var curr = points[j];
+    d += ' L ' + curr.x + ' ' + curr.y;
   }
   
   // Add straight line down from last letter (S) - length based on scroll
