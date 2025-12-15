@@ -534,13 +534,14 @@ svg.connector-svg circle {
   </defs>
   <path id="connector-path"></path>
   <line id="vertical-line" stroke="white" stroke-width="2" opacity="0"></line>
-  <circle id="dot-1" r="5" opacity="0"></circle>
-  <circle id="dot-2" r="5" opacity="0"></circle>
-  <circle id="dot-3" r="5" opacity="0"></circle>
-  <circle id="dot-4" r="5" opacity="0"></circle>
-  <circle id="dot-5" r="5" opacity="0"></circle>
-  <circle id="dot-6" r="5" opacity="0"></circle>
-  <circle id="dot-7" r="5" opacity="0"></circle>
+  <!-- Place dots off-canvas initially (cx/cy) and hide visibility to avoid a flash at 0,0 -->
+  <circle id="dot-1" r="5" cx="-100" cy="-100" opacity="0" style="visibility:hidden"></circle>
+  <circle id="dot-2" r="5" cx="-100" cy="-100" opacity="0" style="visibility:hidden"></circle>
+  <circle id="dot-3" r="5" cx="-100" cy="-100" opacity="0" style="visibility:hidden"></circle>
+  <circle id="dot-4" r="5" cx="-100" cy="-100" opacity="0" style="visibility:hidden"></circle>
+  <circle id="dot-5" r="5" cx="-100" cy="-100" opacity="0" style="visibility:hidden"></circle>
+  <circle id="dot-6" r="5" cx="-100" cy="-100" opacity="0" style="visibility:hidden"></circle>
+  <circle id="dot-7" r="5" cx="-100" cy="-100" opacity="0" style="visibility:hidden"></circle>
 </svg>
 
 <section class="panel" id="main-panel">
@@ -921,7 +922,10 @@ function updateConnector(progress, exitLineLength) {
     if (dots[idx]) {
       dots[idx].setAttribute('cx', pt.x);
       dots[idx].setAttribute('cy', pt.y);
-      dots[idx].style.opacity = progress >= (idx + 1) / points.length ? 0.9 : 0;
+      var dotVisible = progress >= (idx + 1) / points.length;
+      dots[idx].style.opacity = dotVisible ? 0.9 : 0;
+      // Toggle visibility too so the circle (and its drop-shadow) doesn't render at 0,0
+      dots[idx].style.visibility = dotVisible ? 'visible' : 'hidden';
     }
     // Only try to update letter classes for the first 6 points (letters)
     if (idx < letterIds.length) {
