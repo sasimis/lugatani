@@ -874,6 +874,19 @@ for (var i = 0; i < 7; i++) {
   dots.push(document.getElementById('dot-' + (i + 1)));
 }
 
+// Helper to get the last dot's screen position if it's visible.
+function getLastDotPosition() {
+  var lastDot = dots[dots.length - 1];
+  if (!lastDot) return null;
+  // Consider it visible if its computed opacity > 0 or visibility is 'visible'
+  var vis = lastDot.style.visibility === 'visible' || parseFloat(lastDot.style.opacity || '0') > 0;
+  if (!vis) return null;
+  var cx = parseFloat(lastDot.getAttribute('cx'));
+  var cy = parseFloat(lastDot.getAttribute('cy'));
+  if (isNaN(cx) || isNaN(cy)) return null;
+  return { x: cx, y: cy };
+}
+
 // Cache for fixed path when text starts sliding
 var cachedPath = null;
 var cachedDotPositions = [];
@@ -1373,16 +1386,22 @@ ScrollTrigger.create({
         if (dot) dot.style.opacity = Math.max(0, 0.9 - slideProgress);
       });
       
-      // Draw vertical line starting from last letter position going down
-      var lastLetterPos = getLetterCenter('letter-6');
-      var startX = lastLetterPos ? lastLetterPos.x : window.innerWidth / 2;
-      var startY = lastLetterPos ? lastLetterPos.y : window.innerHeight / 2;
-      var verticalLineLength = slideProgress * window.innerHeight * 0.5;
-      verticalLine.setAttribute('x1', startX);
-      verticalLine.setAttribute('y1', startY);
-      verticalLine.setAttribute('x2', startX);
-      verticalLine.setAttribute('y2', startY + verticalLineLength);
-      verticalLine.style.opacity = slideProgress > 0.1 ? 1 : 0;
+      // Draw vertical line only once the last dot is reached. Start from the
+      // last dot's position (if available) so the vertical line visually
+      // continues from the end of the connector dots.
+      var lastDotPos = getLastDotPosition();
+      if (lastDotPos) {
+        var startX = lastDotPos.x;
+        var startY = lastDotPos.y;
+        var verticalLineLength = slideProgress * window.innerHeight * 0.5;
+        verticalLine.setAttribute('x1', startX);
+        verticalLine.setAttribute('y1', startY);
+        verticalLine.setAttribute('x2', startX);
+        verticalLine.setAttribute('y2', startY + verticalLineLength);
+        verticalLine.style.opacity = slideProgress > 0.1 ? 1 : 0;
+      } else {
+        verticalLine.style.opacity = 0;
+      }
       
       // Solid line - no dashes
       verticalLine.style.strokeDasharray = 'none';
@@ -1410,14 +1429,15 @@ ScrollTrigger.create({
         if (dot) dot.style.opacity = 0;
       });
       
-      // Line starts from last letter position (or center if not available)
-      var lastLetterPos = getLetterCenter('letter-6');
-      var centerX = lastLetterPos ? lastLetterPos.x : window.innerWidth / 2;
-      var centerY = lastLetterPos ? lastLetterPos.y : window.innerHeight / 2;
-      
-      // Line extends DOWN from last letter
-      var verticalLineLength = (window.innerHeight * 0.5) + fadeProgress * (window.innerHeight * 1.5);
-      var lineBottomY = centerY + verticalLineLength;
+  // Line starts from the last dot position (preferred) or last letter as fallback
+  var lastDotPos = getLastDotPosition();
+  var fallbackLastLetterPos = getLetterCenter('letter-6');
+  var centerX = lastDotPos ? lastDotPos.x : (fallbackLastLetterPos ? fallbackLastLetterPos.x : window.innerWidth / 2);
+  var centerY = lastDotPos ? lastDotPos.y : (fallbackLastLetterPos ? fallbackLastLetterPos.y : window.innerHeight / 2);
+
+  // Line extends DOWN from that start point
+  var verticalLineLength = (window.innerHeight * 0.5) + fadeProgress * (window.innerHeight * 1.5);
+  var lineBottomY = centerY + verticalLineLength;
       
       // After 50% progress, line ALSO extends UP from top of screen
       var lineTopY = centerY;
