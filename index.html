@@ -93,18 +93,18 @@ html, body, * {
   font-size: 40px; /* explicit size per request */
   font-weight: 700;
   font-style: italic;
-  color: black;
-  /* We used to move the percent with margin-top which changed layout and pushed
-     the connecting line down in some browsers (notably Safari on iOS). Instead
-     use a transform-based visual offset so the percent appears higher without
-     affecting the flow of the loader-line below. */
-  --loader-percent-offset: -12vh; /* default visual lift (can be overridden in media queries) */
-  transform: translateY(var(--loader-percent-offset));
-  margin-bottom: 20px; /* small gap below percent (doesn't move the line) */
-
-  /* Center the percentage text horizontally without affecting layout flow */
+  color: white;
+  /* Place the percent absolutely so it sits above the connecting line and
+     doesn't affect the document flow. Use dvh where supported with a vh
+     fallback for older browsers. */
+  position: absolute;
+  left: 50%;
+  top: 30dvh;
+  top: 30vh; /* fallback for browsers not supporting dvh */
+  transform: translateX(-50%);
+  z-index: 10001; /* above loader content */
+  margin: 0; /* reset margins */
   text-align: center;
-  align-self: center;
 }
 /* Line images that connect percent to arrow */
 .loader-line {
@@ -116,10 +116,8 @@ html, body, * {
   gap: 4px;
   pointer-events: none; /* individual images can enable pointer-events when ready */
 
-  /* Ensure the line always starts directly below the percentage.
-     Remove the previous large negative nudge and rely on the percent's
-     margin-bottom to create spacing. */
-  margin-top: 3vh;
+  /* Ensure the line starts beneath the absolutely-positioned percentage */
+  margin-top: calc(36vh);
   margin-bottom: 20px;
 }
 
@@ -443,16 +441,15 @@ svg.connector-svg circle {
   /* Loader - bigger percentage */
   .loader-percent {
     font-size: clamp(28px, 10vw, 64px);
-    /* less lift on medium screens */
-    --loader-percent-offset: -9vh;
+    /* medium screens - font-size only (position handled via absolute top) */
   }
   
   /* make ponta image smaller on mid-size screens */
   #ponta-img {
     width: 50px;
   }
-  /* keep the connecting line below the percent on medium screens */
-  .loader-line { margin-top: 2.5vh; }
+  /* keep the connecting line below the absolute percent on medium screens */
+  .loader-line { margin-top: calc(34vh); }
   
   /* Main text - keep left aligned but adjust padding */
   .txt {
@@ -501,16 +498,15 @@ svg.connector-svg circle {
 @media screen and (max-width: 480px) {
   .loader-percent {
     font-size: clamp(36px, 12vw, 72px);
-    /* small devices: small visual lift so percent doesn't overlap top UI */
-    --loader-percent-offset: -7vh;
+    /* small devices - font-size only (position handled via absolute top) */
   }
   
   /* make ponta image smaller on extra-small screens */
   #ponta-img {
     width: 60px;
   }
-  /* keep the connecting line below the percent on extra-small phones */
-  .loader-line { margin-top: 1.5vh; }
+  /* keep the connecting line below the absolute percent on small phones */
+  .loader-line { margin-top: calc(30vh); }
   
   .txt {
     padding: 10px 10px;
