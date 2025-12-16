@@ -84,21 +84,25 @@ html, body, * {
   flex-direction: column;
   align-items: center;
   justify-content: flex-start;
-  height: 100vh; /* full viewport so we can place percent at middle */
+  /* Use dynamic viewport height to avoid mobile Safari / iOS 'vh' issues.
+     Fall back to -webkit-fill-available for older Safari versions. */
+  height: 100dvh;
+  min-height: -webkit-fill-available;
 }
 .loader-percent {
   font-size: 40px; /* explicit size per request */
   font-weight: 700;
   font-style: italic;
   color: black;
-  /* place percent starting from middle of viewport */
-  /* shift percent a bit higher so the connecting line can sit below it and both remain on-screen */
-  margin-top: calc(38vh - 45px);
-  margin-bottom: 20px; /* small gap below percent */
+  /* We used to move the percent with margin-top which changed layout and pushed
+     the connecting line down in some browsers (notably Safari on iOS). Instead
+     use a transform-based visual offset so the percent appears higher without
+     affecting the flow of the loader-line below. */
+  --loader-percent-offset: -12vh; /* default visual lift (can be overridden in media queries) */
+  transform: translateY(var(--loader-percent-offset));
+  margin-bottom: 20px; /* small gap below percent (doesn't move the line) */
 
-  /* Center the percentage text horizontally without affecting layout flow
-     so the connecting line below won't be pushed down. Using both
-     text-align and align-self for robust centering inside the flex column. */
+  /* Center the percentage text horizontally without affecting layout flow */
   text-align: center;
   align-self: center;
 }
@@ -439,6 +443,8 @@ svg.connector-svg circle {
   /* Loader - bigger percentage */
   .loader-percent {
     font-size: clamp(28px, 10vw, 64px);
+    /* less lift on medium screens */
+    --loader-percent-offset: -9vh;
   }
   
   /* make ponta image smaller on mid-size screens */
@@ -495,6 +501,8 @@ svg.connector-svg circle {
 @media screen and (max-width: 480px) {
   .loader-percent {
     font-size: clamp(36px, 12vw, 72px);
+    /* small devices: small visual lift so percent doesn't overlap top UI */
+    --loader-percent-offset: -7vh;
   }
   
   /* make ponta image smaller on extra-small screens */
