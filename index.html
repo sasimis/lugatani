@@ -244,9 +244,9 @@ svg.connector-svg path.intermittent {
 }
 
 svg.connector-svg line#vertical-line {
-  /* Solid straight line - no dashes */
+  /* Solid straight line - used for both downward and upward growth */
   stroke-linecap: round;
-  transition: opacity 0.5s ease;
+  transition: opacity 0.45s ease;
 }
 
 svg.connector-svg circle {
@@ -564,6 +564,7 @@ svg.connector-svg circle {
   </defs>
   <path id="connector-path"></path>
   <line id="vertical-line" stroke="white" stroke-width="2" opacity="0"></line>
+  <!-- single vertical line used for both down/up growth -->
   <!-- Place dots off-canvas initially (cx/cy) and hide visibility to avoid a flash at 0,0 -->
   <circle id="dot-1" r="5" cx="-100" cy="-100" opacity="0" style="visibility:hidden"></circle>
   <circle id="dot-2" r="5" cx="-100" cy="-100" opacity="0" style="visibility:hidden"></circle>
@@ -1235,8 +1236,8 @@ ScrollTrigger.create({
   pinSpacing: true,
   onUpdate: function(self) {
     var progress = self.progress;
-    var svg = document.getElementById('connector-svg');
-    var verticalLine = document.getElementById('vertical-line');
+  var svg = document.getElementById('connector-svg');
+  var verticalLine = document.getElementById('vertical-line');
     
     // Only animate if text animation is complete - force back to top if not
     if (!textAnimationComplete) {
@@ -1276,8 +1277,8 @@ ScrollTrigger.create({
       // Reset everything - full cleanup for scroll-back-up
       cachedPath = null;
       cachedDotPositions = [];
-      connPath.classList.remove('glowing', 'intermittent');
-      verticalLine.style.opacity = 0;
+  connPath.classList.remove('glowing', 'intermittent');
+  verticalLine.style.opacity = 0;
       verticalLine.style.filter = 'none';
       
     // Keep background dark
@@ -1394,11 +1395,11 @@ ScrollTrigger.create({
         var startX = lastDotPos.x;
         var startY = lastDotPos.y;
         var verticalLineLength = slideProgress * window.innerHeight * 0.5;
-        verticalLine.setAttribute('x1', startX);
-        verticalLine.setAttribute('y1', startY);
-        verticalLine.setAttribute('x2', startX);
-        verticalLine.setAttribute('y2', startY + verticalLineLength);
-        verticalLine.style.opacity = slideProgress > 0.1 ? 1 : 0;
+  verticalLine.setAttribute('x1', startX);
+  verticalLine.setAttribute('y1', startY);
+  verticalLine.setAttribute('x2', startX);
+  verticalLine.setAttribute('y2', startY + verticalLineLength);
+  verticalLine.style.opacity = slideProgress > 0.1 ? 1 : 0;
       } else {
         verticalLine.style.opacity = 0;
       }
@@ -1416,12 +1417,26 @@ ScrollTrigger.create({
   // Restore left alignment smoothly after the slide phase completes
   animateTxtAlignment('left');
       
-      // Continue sliding words off screen
-      var slideAmount = (window.innerWidth * 0.5) + fadeProgress * (window.innerWidth * 0.8);
+      // Decide whether words should slide off-screen: only slide when the
+      // final dot is present and the upward vertical line is visibly growing.
       var allWords = document.querySelectorAll('.word');
-      allWords.forEach(function(word) {
-        word.style.transform = 'translateX(' + slideAmount + 'px)';
-      });
+  var lastDotPosForSlide = getLastDotPosition();
+  var verticalVisible = verticalLine && parseFloat(verticalLine.style.opacity || '0') > 0.02;
+  var shouldSlideWords = lastDotPosForSlide && verticalVisible;
+
+      if (shouldSlideWords) {
+        // Slide words off to the right only when conditions met
+        var slideAmount = (window.innerWidth * 0.5) + fadeProgress * (window.innerWidth * 0.8);
+        allWords.forEach(function(word) {
+          word.style.transform = 'translateX(' + slideAmount + 'px)';
+        });
+      } else {
+        // Keep words in place (no rightward slide) while the upward line hasn't
+        // anchored at the final dot yet. Clear any translateX so they remain visible.
+        allWords.forEach(function(word) {
+          word.style.transform = 'translateX(0px)';
+        });
+      }
       
       // Connector line and dots already faded in Phase 2, keep them hidden
       connPath.style.opacity = 0;
@@ -1429,28 +1444,27 @@ ScrollTrigger.create({
         if (dot) dot.style.opacity = 0;
       });
       
-  // Line starts from the last dot position (preferred) or last letter as fallback
+  // Line behavior: when the final dot is reached, start the vertical line
+  // from that dot and extend it UPwards as the user scrolls (creating an
+  // ascending path). If the dot isn't available yet, fall back to the last
+  // letter center and extend from there.
   var lastDotPos = getLastDotPosition();
   var fallbackLastLetterPos = getLetterCenter('letter-6');
-  var centerX = lastDotPos ? lastDotPos.x : (fallbackLastLetterPos ? fallbackLastLetterPos.x : window.innerWidth / 2);
-  var centerY = lastDotPos ? lastDotPos.y : (fallbackLastLetterPos ? fallbackLastLetterPos.y : window.innerHeight / 2);
+  var startX = lastDotPos ? lastDotPos.x : (fallbackLastLetterPos ? fallbackLastLetterPos.x : window.innerWidth / 2);
+  var startY = lastDotPos ? lastDotPos.y : (fallbackLastLetterPos ? fallbackLastLetterPos.y : window.innerHeight / 2);
 
-  // Line extends DOWN from that start point
-  var verticalLineLength = (window.innerHeight * 0.5) + fadeProgress * (window.innerHeight * 1.5);
-  var lineBottomY = centerY + verticalLineLength;
-      
-      // After 50% progress, line ALSO extends UP from top of screen
-      var lineTopY = centerY;
-      if (fadeProgress > 0.5) {
-        var upProgress = (fadeProgress - 0.5) / 0.5; // 0 to 1 over second half
-        // Line top moves up toward top of screen
-        lineTopY = centerY - (upProgress * (centerY + 50));
-      }
-      
-      verticalLine.setAttribute('x1', centerX);
-      verticalLine.setAttribute('y1', lineTopY);
-      verticalLine.setAttribute('x2', centerX);
-      verticalLine.setAttribute('y2', lineBottomY);
+  // Compute how far up the line should go. We want the visible portion to
+  // grow upwards from the starting point; use fadeProgress to control length.
+  var upLength = (window.innerHeight * 0.25) + fadeProgress * (window.innerHeight * 1.2);
+  var lineTopY = Math.max(-200, startY - upLength);
+  var lineBottomY = startY; // bottom anchored at the dot/start point
+
+  verticalLine.setAttribute('x1', startX);
+  verticalLine.setAttribute('y1', lineTopY);
+  verticalLine.setAttribute('x2', startX);
+  verticalLine.setAttribute('y2', lineBottomY);
+  // The single verticalLine is used for the upward growth; its y1/y2
+  // were already set above to lineTopY..lineBottomY and opacity controlled.
       
       // Solid line - no dashes
       verticalLine.style.strokeDasharray = 'none';
@@ -1469,73 +1483,70 @@ ScrollTrigger.create({
       panel.style.background = '#111';
       
     } else {
-      // Phase 4: Line covers top to bottom, gradient rises and covers the line from bottom
-      // Line stays vertical in the center, ending at hamburger position
+      // Phase 4: Make the vertical line extend to (and beyond) the bottom
+      // of the viewport creating a visible downward path while the panel
+      // background remains fully black. As the user scrolls in this phase,
+      // they effectively pass through a 'black' section with the vertical
+      // line marking the path.
       var finalProgress = (progress - fadeOutPhaseEnd) / (1 - fadeOutPhaseEnd);
-      
-      // Hide words completely
+
+      // Hide words and connector elements
       var allWords = document.querySelectorAll('.word');
-      allWords.forEach(function(word) {
-        word.style.opacity = 0;
-      });
-      
-      // Hide connector completely
+      allWords.forEach(function(word) { word.style.opacity = 0; });
       connPath.style.opacity = 0;
-      dots.forEach(function(dot) {
-        if (dot) dot.style.opacity = 0;
-      });
-      
-      // Background radial gradient fills from bottom - from 0% to 100%
-      var greenHeight = finalProgress * 110; // Green covers from 0% to 110% (full)
-      if (greenHeight >= 100) {
-        // Full green background
-        panel.style.background = '#009844';
+      dots.forEach(function(dot) { if (dot) dot.style.opacity = 0; });
+
+      // Keep the background fully black initially for this phase. After a
+      // short amount of scrolling into Phase 4, start revealing an inverted
+      // green gradient from the TOP downward so the page fills with green.
+      var revealStart = 0.12; // fraction of Phase 4 before gradient begins
+      var revealProgress = Math.max(0, (finalProgress - revealStart) / (1 - revealStart));
+      if (revealProgress <= 0) {
+        panel.style.background = '#111';
       } else {
-        panel.style.background = 'radial-gradient(ellipse 200% 100% at 50% 120%, #009844 0%, #009844 ' + (greenHeight + 10) + '%, #004d25 ' + (greenHeight + 20) + '%, #111 ' + Math.min(100, greenHeight + 50) + '%)';
+        // Map revealProgress to a percentage for the gradient stops
+        var greenPct = Math.min(100, Math.round(revealProgress * 110));
+        if (greenPct >= 100) {
+          panel.style.background = '#009844';
+        } else {
+          panel.style.background = 'linear-gradient(to bottom, #009844 0%, #009844 ' + greenPct + '%, #004d25 ' + (greenPct + 6) + '%, #111 ' + Math.min(100, greenPct + 40) + '%)';
+        }
       }
-      
-      // Line stays vertical in the CENTER of the screen
-      var centerX = window.innerWidth / 2;
-      var lineTopY = -50; // Above screen
-      // Line bottom is at center of screen (where hamburger is) - gradient covers from below
-      var hamburgerY = window.innerHeight / 2;
-      var gradientCoverY = window.innerHeight - (finalProgress * window.innerHeight);
-      // Line ends at hamburger position or where gradient covers it
-      var lineBottomY = Math.max(gradientCoverY, hamburgerY);
-      
-      // Keep line vertical at center
-      verticalLine.setAttribute('x1', centerX);
-      verticalLine.setAttribute('y1', lineTopY);
-      verticalLine.setAttribute('x2', centerX);
-      verticalLine.setAttribute('y2', lineBottomY);
-      
-      // Solid line - no dashes
+
+  // Vertical line: we want its visible portion to stay centered in the
+  // viewport as it grows. Compute the total length based on finalProgress
+  // then position it so its midpoint is at the viewport center.
+  var centerX = window.innerWidth / 2;
+  var viewportCenterY = window.innerHeight / 2;
+  // Base length and extra extension (in px)
+  var baseLength = window.innerHeight * 0.4; // starting visible length
+  var extraLength = finalProgress * (window.innerHeight * 1.8); // how much it can grow
+  var totalLength = baseLength + extraLength;
+  // Compute top and bottom so the line midpoint is at viewport center
+  var lineTopY = viewportCenterY - (totalLength / 2);
+  var lineBottomY = viewportCenterY + (totalLength / 2);
+
+  verticalLine.setAttribute('x1', centerX);
+  verticalLine.setAttribute('y1', lineTopY);
+  verticalLine.setAttribute('x2', centerX);
+  verticalLine.setAttribute('y2', lineBottomY);
+
       verticalLine.style.strokeDasharray = 'none';
       verticalLine.style.strokeDashoffset = 0;
-      
-      // Line stays visible until it's fully covered
-      var lineOpacity = finalProgress >= 1 ? 0 : 1;
-      verticalLine.style.opacity = lineOpacity;
-      
-      // Glow effect
+      verticalLine.style.opacity = 1;
       verticalLine.style.filter = 'drop-shadow(0 0 4px rgba(255, 255, 255, 0.6)) drop-shadow(0 0 8px rgba(0, 152, 68, 0.8))';
-      
-      // Hamburger only appears when gradient is 100% complete
+
+      // Show hamburger at the very end of the phase
       var hamburger = document.getElementById('hamburger');
       var hamburgerBars = document.querySelectorAll('.hamburger-menu .bar');
       var trackTrace = document.getElementById('track-trace');
-      
-      if (greenHeight >= 100) {
-        // Gradient complete - show hamburger (black) and track trace link
+      if (finalProgress >= 1) {
         hamburger.classList.add('visible');
         trackTrace.classList.add('visible');
-        hamburgerBars.forEach(function(bar) {
-          bar.style.background = '#111';
-        });
+        hamburgerBars.forEach(function(bar) { bar.style.background = '#111'; });
         var hamburgerImg = document.getElementById('hamburger-img');
         if (hamburgerImg) hamburgerImg.style.filter = 'brightness(0)';
       } else {
-        // Gradient not complete - hide hamburger and track trace link
         hamburger.classList.remove('visible');
         trackTrace.classList.remove('visible');
       }
