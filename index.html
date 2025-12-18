@@ -94,30 +94,35 @@ html, body, * {
   font-weight: 700;
   font-style: italic;
   color: black;
-  /* Place the percent absolutely so it sits above the connecting line and
-     doesn't affect the document flow. Use dvh where supported with a vh
-     fallback for older browsers. */
+  /* Center the percent both horizontally and vertically. Keep it out of
+     document flow so the connecting line can be positioned independently. */
   position: absolute;
   left: 50%;
-  top: 30dvh;
-  top: 30vh; /* fallback for browsers not supporting dvh */
-  transform: translateX(-50%);
+  top: 50dvh;
+  top: 50vh; /* fallback for browsers not supporting dvh */
+  transform: translate(-50%, -50%);
   z-index: 10001; /* above loader content */
   margin: 0; /* reset margins */
   text-align: center;
 }
 /* Line images that connect percent to arrow */
 .loader-line {
-  width: 100%;
+  width: 360px; /* fixed visual width so filete scales predictably */
+  max-width: 90%;
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: flex-start;
-  gap: 4px;
+  gap: 8px;
   pointer-events: none; /* individual images can enable pointer-events when ready */
 
-  /* Ensure the line starts beneath the absolutely-positioned percentage */
-  margin-top: calc(36vh);
+  /* Position loader-line absolutely below the centered percent so the
+     percent remains centered and the line can open downward toward the tip */
+  position: absolute;
+  left: 50%;
+  transform: translateX(-50%);
+  top: calc(50dvh + 76px);
+  top: calc(50vh + 76px); /* fallback */
   margin-bottom: 20px;
 }
 
@@ -657,13 +662,14 @@ function checkAllReady() {
         gsap.to(fileteImg, { duration: 0.45, scaleY: 1, opacity: 1, ease: 'power2.out' });
       }
       if (pontaImg) {
-        // animate a small drop/nudge so it sits on the tip of the extended line
-        gsap.to(pontaImg, { duration: 0.45, y: 6, opacity: 1, ease: 'power2.out' });
+        // Make ponta visible and give a small scale/opacity ease without
+        // translating it vertically (keep it visually stationary)
+        gsap.to(pontaImg, { duration: 0.45, scale: 1.02, opacity: 1, ease: 'power2.out' });
       }
     } catch (e) {
       // If GSAP isn't available for any reason, fall back to setting final styles
-      if (fileteImg) { fileteImg.style.transform = 'scaleY(1)'; fileteImg.style.opacity = '1'; }
-      if (pontaImg) { pontaImg.style.transform = 'translateY(6px)'; pontaImg.style.opacity = '1'; }
+        if (fileteImg) { fileteImg.style.transform = 'scaleY(1)'; fileteImg.style.opacity = '1'; }
+        if (pontaImg) { pontaImg.style.transform = ''; pontaImg.style.opacity = '1'; }
     }
 
     // Let the visuals settle to final state, but DO NOT auto-enter.
@@ -731,14 +737,13 @@ function updateLoaderVisuals(percentValue) {
   }
 
   // Ponta (tip) becomes visible as soon as filete starts showing and nudges slightly
+  // Keep ponta stationary vertically — only toggle visibility. The filete
+  // scaling gives the impression of opening downwards toward the tip.
   if (p > fileteThreshold) {
     pontaImg.style.opacity = 1;
-    // small nudge to visually connect when near the end
-    var nudge = Math.min(8, mapped * 8); // px
-    pontaImg.style.transform = 'translateY(' + nudge + 'px)';
+    // leave transform alone so the image does not move downwards
   } else {
     pontaImg.style.opacity = 0;
-    pontaImg.style.transform = 'translateY(0px)';
   }
 }
 
