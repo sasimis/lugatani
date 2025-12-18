@@ -71,6 +71,10 @@ html, body, * {
   flex-direction: column;
   align-items: center;
   justify-content: center;
+  /* Provide safe-area padding so the loader content won't be clipped
+     by notches / browser UI on mobile devices */
+  padding-top: env(safe-area-inset-top);
+  padding-bottom: env(safe-area-inset-bottom);
   z-index: 9999;
   transition: opacity 0.6s ease, visibility 0.6s ease;
 }
@@ -117,12 +121,14 @@ html, body, * {
   pointer-events: none; /* individual images can enable pointer-events when ready */
 
   /* Position loader-line absolutely below the centered percent so the
-     percent remains centered and the line can open downward toward the tip */
+    percent remains centered and the line can open downward toward the tip.
+    Reduce the offset so the arrow sits higher on the screen and include
+    the safe-area inset to avoid clipping on devices with notches. */
   position: absolute;
   left: 50%;
   transform: translateX(-50%);
-  top: calc(50dvh + 76px);
-  top: calc(50vh + 76px); /* fallback */
+  top: calc(50dvh + 40px + env(safe-area-inset-top));
+  top: calc(50vh + 40px); /* fallback */
   margin-bottom: 20px;
 }
 
@@ -453,8 +459,8 @@ svg.connector-svg circle {
   #ponta-img {
     width: 50px;
   }
-  /* keep the connecting line below the absolute percent on medium screens */
-  .loader-line { margin-top: calc(34vh); }
+  /* adjust absolute-positioned loader-line for medium screens so it doesn't clip */
+  .loader-line { top: calc(50dvh + 28px + env(safe-area-inset-top)); top: calc(50vh + 28px); }
   
   /* Main text - keep left aligned but adjust padding */
   .txt {
@@ -510,8 +516,8 @@ svg.connector-svg circle {
   #ponta-img {
     width: 60px;
   }
-  /* keep the connecting line below the absolute percent on small phones */
-  .loader-line { margin-top: calc(30vh); }
+  /* adjust absolute-positioned loader-line for very small screens */
+  .loader-line { top: calc(50dvh + 22px + env(safe-area-inset-top)); top: calc(50vh + 22px); }
   
   .txt {
     padding: 10px 10px;
